@@ -707,8 +707,16 @@ function showToast(msg, isError) {
   setTimeout(() => t.className = 'toast', 3000);
 }
 
+// Local date helper (avoids UTC timezone rollback)
+function localDateStr(d) {
+  d = d || new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,'0');
+  const dy = String(d.getDate()).padStart(2,'0');
+  return yr + '-' + mo + '-' + dy;
+}
 // Set today's date as default
-document.getElementById('date').value = new Date().toISOString().split('T')[0];
+document.getElementById('date').value = localDateStr();
 
 // ── FORM SUBMIT ──────────────────────────────────────────
 async function submitForm() {
@@ -763,7 +771,7 @@ async function submitForm() {
 function resetForm() {
   document.getElementById('surgeon').value = '';
   document.getElementById('location').value = '';
-  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('date').value = localDateStr();
   document.getElementById('mrn').value = '';
   document.getElementById('scheduled_start').value = '';
   document.getElementById('timeout_time').value = '';
@@ -800,8 +808,8 @@ function setDefaultDates() {
   const to = new Date();
   const from = new Date();
   from.setDate(from.getDate() - 30);
-  document.getElementById('filter-to').value = to.toISOString().split('T')[0];
-  document.getElementById('filter-from').value = from.toISOString().split('T')[0];
+  document.getElementById('filter-to').value = localDateStr(to);
+  document.getElementById('filter-from').value = localDateStr(from);
 }
 
 async function loadReport() {
@@ -845,10 +853,14 @@ function renderReport(rows, from, to) {
   // Compute avg delay minutes
   let delayMins = rows.map(r => {
     if (!r.scheduled_start || !r.timeout_time) return null;
-    const [sh, sm] = r.scheduled_start.split(':').map(Number);
-    const [th, tm] = r.timeout_time.split(':').map(Number);
-    return (th * 60 + tm) - (sh * 60 + sm);
-  }).filter(v => v !== null && v > 0);
+    const sParts = r.scheduled_start.split(':').map(Number);
+    const tParts = r.timeout_time.split(':').map(Number);
+    if (sParts.length < 2 || tParts.length < 2) return null;
+    const startMins = sParts[0] * 60 + sParts[1];
+    const endMins = tParts[0] * 60 + tParts[1];
+    const diff = endMins - startMins;
+    return diff > 0 ? diff : null;
+  }).filter(v => v !== null);
   const avgDelay = delayMins.length ? Math.round(delayMins.reduce((a,b) => a+b,0) / delayMins.length) : '—';
 
   const summaryData = [
