@@ -163,11 +163,7 @@
     background: rgba(79,142,247,0.08);
   }
   .cause-option input[type="radio"] {
-    width: 18px; height: 18px;
-    flex-shrink: 0;
-    margin-top: 1px;
-    accent-color: var(--accent);
-    cursor: pointer;
+    display: none;
   }
   .cause-text { flex: 1; }
   .cause-title {
@@ -638,9 +634,9 @@
         <label>Location</label>
         <select id="filter-loc">
           <option value="">All locations</option>
-          <option>FMC L&amp;D</option>
-          <option>OMC L&amp;D</option>
-          <option>FMC Main OR L&amp;D</option>
+          <option value="FMC L&D">FMC L&D</option>
+          <option value="OMC L&D">OMC L&D</option>
+          <option value="FMC Main OR L&D">FMC Main OR L&D</option>
         </select>
       </div>
       <button class="filter-btn" onclick="loadReport()">Apply</button>
@@ -660,10 +656,10 @@
 <script>
 // ── CONFIG ──────────────────────────────────────────────
 // Replace with your deployed Google Apps Script Web App URL:
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
+const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
 
 // Admin password (change this):
-const ADMIN_PASSWORD = '123456';
+const ADMIN_PASSWORD = 'changeme123';
 
 // ── CAUSE LABELS ────────────────────────────────────────
 const CAUSE_LABELS = {
@@ -688,11 +684,14 @@ function showPage(p) {
   event.target.classList.add('active');
 }
 
+let selectedCause = '';
+
 function selectCause(label) {
   document.querySelectorAll('.cause-option').forEach(el => el.classList.remove('selected'));
   label.classList.add('selected');
-  const val = label.querySelector('input[type="radio"]').value;
-  document.getElementById('other-field').style.display = val === 'Other' ? 'block' : 'none';
+  selectedCause = label.querySelector('input[type="radio"]').value;
+  label.querySelector('input[type="radio"]').checked = true;
+  document.getElementById('other-field').style.display = selectedCause === 'Other' ? 'block' : 'none';
 }
 
 function setHP(v) {
@@ -719,8 +718,7 @@ async function submitForm() {
   const mrn = document.getElementById('mrn').value.trim();
   const sched = document.getElementById('scheduled_start').value;
   const tout = document.getElementById('timeout_time').value;
-  const causeRadio = document.querySelector('input[name="cause"]:checked');
-  const cause = causeRadio ? causeRadio.value : '';
+  const cause = selectedCause;
   const otherCause = document.getElementById('other_cause').value.trim();
 
   if (!surgeon || !location || !date || !mrn || !sched || !tout || !cause) {
@@ -771,6 +769,7 @@ function resetForm() {
   document.getElementById('timeout_time').value = '';
   document.querySelectorAll('.cause-option').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('input[name="cause"]').forEach(el => el.checked = false);
+  selectedCause = '';
   document.getElementById('other-field').style.display = 'none';
   document.getElementById('other_cause').value = '';
   hpValue = '';
