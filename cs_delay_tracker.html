@@ -503,15 +503,9 @@
     </select>
   </div>
 
-  <div class="row-2">
-    <div class="field">
-      <label>Date <span class="req">*</span></label>
-      <input type="date" id="date">
-    </div>
-    <div class="field">
-      <label>MRN <span class="req">*</span></label>
-      <input type="text" id="mrn" placeholder="Patient MRN" inputmode="numeric">
-    </div>
+  <div class="field">
+    <label>MRN <span class="req">*</span></label>
+    <input type="text" id="mrn" placeholder="Patient MRN" inputmode="numeric">
   </div>
 
   <div class="row-2">
@@ -656,7 +650,7 @@
 <script>
 // ── CONFIG ──────────────────────────────────────────────
 // Replace with your deployed Google Apps Script Web App URL:
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
+const APPS_SCRIPT_URL = 'https://hampstar123.github.io/cs-delay-tracker/cs_delay_tracker.html';
 
 // Admin password (change this):
 const ADMIN_PASSWORD = '123456';
@@ -715,21 +709,20 @@ function localDateStr(d) {
   const dy = String(d.getDate()).padStart(2,'0');
   return yr + '-' + mo + '-' + dy;
 }
-// Set today's date as default
-document.getElementById('date').value = localDateStr();
+// Date is auto-stamped on submit
 
 // ── FORM SUBMIT ──────────────────────────────────────────
 async function submitForm() {
   const surgeon = document.getElementById('surgeon').value.trim();
   const location = document.getElementById('location').value;
-  const date = document.getElementById('date').value;
+  const date = localDateStr();
   const mrn = document.getElementById('mrn').value.trim();
   const sched = document.getElementById('scheduled_start').value;
   const tout = document.getElementById('timeout_time').value;
   const cause = selectedCause;
   const otherCause = document.getElementById('other_cause').value.trim();
 
-  if (!surgeon || !location || !date || !mrn || !sched || !tout || !cause) {
+  if (!surgeon || !location || !mrn || !sched || !tout || !cause) {
     showToast('Please fill in all required fields.', true); return;
   }
   if (cause === 'Other' && !otherCause) {
@@ -771,7 +764,7 @@ async function submitForm() {
 function resetForm() {
   document.getElementById('surgeon').value = '';
   document.getElementById('location').value = '';
-  document.getElementById('date').value = localDateStr();
+
   document.getElementById('mrn').value = '';
   document.getElementById('scheduled_start').value = '';
   document.getElementById('timeout_time').value = '';
