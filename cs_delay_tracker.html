@@ -140,6 +140,7 @@
   textarea { resize: vertical; min-height: 80px; }
 
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
   .cause-grid {
     display: flex;
@@ -508,13 +509,17 @@
     <input type="text" id="mrn" placeholder="Patient MRN" inputmode="numeric">
   </div>
 
-  <div class="row-2">
+  <div class="row-3">
     <div class="field">
-      <label>Scheduled Start Time <span class="req">*</span></label>
+      <label>Date <span class="req">*</span></label>
+      <input type="date" id="case_date">
+    </div>
+    <div class="field">
+      <label>Scheduled Start <span class="req">*</span></label>
       <input type="time" id="scheduled_start">
     </div>
     <div class="field">
-      <label>First Time-Out Time <span class="req">*</span></label>
+      <label>First Time-Out <span class="req">*</span></label>
       <input type="time" id="timeout_time">
     </div>
   </div>
@@ -649,11 +654,8 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────
-// Replace with your deployed Google Apps Script Web App URL:
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
-
-// Admin password (change this):
-const ADMIN_PASSWORD = 'changeme123';
+const ADMIN_PASSWORD = '123456';
 
 // ── CAUSE LABELS ────────────────────────────────────────
 const CAUSE_LABELS = {
@@ -669,6 +671,21 @@ const CAUSE_COLORS = ['#7c5cfc','#4f8ef7','#a58cf8','#7aabfa','#7a8299'];
 let hpValue = '';
 let allRows = [];
 let pieChart = null;
+let selectedCause = '';
+
+// ── LOCAL DATE HELPER ────────────────────────────────────
+function localDateStr(d) {
+  d = d || new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,'0');
+  const dy = String(d.getDate()).padStart(2,'0');
+  return yr + '-' + mo + '-' + dy;
+}
+
+// Pre-fill date field with today on load
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('case_date').value = localDateStr();
+});
 
 // ── UI HELPERS ───────────────────────────────────────────
 function showPage(p) {
@@ -677,8 +694,6 @@ function showPage(p) {
   document.getElementById('page-' + p).classList.add('active');
   event.target.classList.add('active');
 }
-
-let selectedCause = '';
 
 function selectCause(label) {
   document.querySelectorAll('.cause-option').forEach(el => el.classList.remove('selected'));
@@ -701,28 +716,18 @@ function showToast(msg, isError) {
   setTimeout(() => t.className = 'toast', 3000);
 }
 
-// Local date helper (avoids UTC timezone rollback)
-function localDateStr(d) {
-  d = d || new Date();
-  const yr = d.getFullYear();
-  const mo = String(d.getMonth()+1).padStart(2,'0');
-  const dy = String(d.getDate()).padStart(2,'0');
-  return yr + '-' + mo + '-' + dy;
-}
-// Date is auto-stamped on submit
-
 // ── FORM SUBMIT ──────────────────────────────────────────
 async function submitForm() {
   const surgeon = document.getElementById('surgeon').value.trim();
   const location = document.getElementById('location').value;
-  const date = localDateStr();
+  const date = document.getElementById('case_date').value;
   const mrn = document.getElementById('mrn').value.trim();
   const sched = document.getElementById('scheduled_start').value;
   const tout = document.getElementById('timeout_time').value;
   const cause = selectedCause;
   const otherCause = document.getElementById('other_cause').value.trim();
 
-  if (!surgeon || !location || !mrn || !sched || !tout || !cause) {
+  if (!surgeon || !location || !date || !mrn || !sched || !tout || !cause) {
     showToast('Please fill in all required fields.', true); return;
   }
   if (cause === 'Other' && !otherCause) {
@@ -764,7 +769,7 @@ async function submitForm() {
 function resetForm() {
   document.getElementById('surgeon').value = '';
   document.getElementById('location').value = '';
-
+  document.getElementById('case_date').value = localDateStr(); // reset to today
   document.getElementById('mrn').value = '';
   document.getElementById('scheduled_start').value = '';
   document.getElementById('timeout_time').value = '';
@@ -831,7 +836,6 @@ function renderReport(rows, from, to) {
     return;
   }
 
-  // Tally causes
   const causeCounts = { '1': 0, '2': 0, '3': 0, '4': 0, 'Other': 0 };
   rows.forEach(r => {
     const k = r.cause in causeCounts ? r.cause : 'Other';
@@ -839,11 +843,9 @@ function renderReport(rows, from, to) {
   });
   const total = rows.length;
 
-  // HP stats
   const hpYes = rows.filter(r => r.hp_signed === 'yes').length;
   const hpNo = rows.filter(r => r.hp_signed === 'no').length;
 
-  // Compute avg delay minutes
   let delayMins = rows.map(r => {
     if (!r.scheduled_start || !r.timeout_time) return null;
     const sParts = r.scheduled_start.split(':').map(Number);
@@ -955,7 +957,6 @@ function renderReport(rows, from, to) {
 
   document.getElementById('report-content').innerHTML = html;
 
-  // Draw pie chart
   if (pieChart) { pieChart.destroy(); }
   const ctx = document.getElementById('pie-chart').getContext('2d');
   pieChart = new Chart(ctx, {
