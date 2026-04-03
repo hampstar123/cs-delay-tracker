@@ -820,7 +820,7 @@ async function loadReport() {
   document.getElementById('report-content').innerHTML = '<div class="empty-state"><div class="icon">⏳</div>Loading data…</div>';
 
   try {
-    const url = APPS_SCRIPT_URL + '?from=' + from + '&to=' + to + (loc ? '&location=' + encodeURIComponent(loc) : '');
+    const url = APPS_SCRIPT_URL + '?from=' + from + '&to=' + to + (loc ? '&location=' + encodeURIComponent(loc) : '') + '&t=' + Date.now();
     const res = await fetch(url);
     const data = await res.json();
     allRows = data.rows || [];
