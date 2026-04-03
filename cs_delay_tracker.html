@@ -846,13 +846,19 @@ function renderReport(rows, from, to) {
   const hpYes = rows.filter(r => r.hp_signed === 'yes').length;
   const hpNo = rows.filter(r => r.hp_signed === 'no').length;
 
+  function parseTimeToMins(val) {
+    if (!val) return null;
+    if (!isNaN(val) && parseFloat(val) > 0 && parseFloat(val) < 1) {
+      return Math.round(parseFloat(val) * 24 * 60);
+    }
+    const parts = val.toString().split(':').map(Number);
+    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
+    return parts[0] * 60 + parts[1];
+  }
   let delayMins = rows.map(r => {
-    if (!r.scheduled_start || !r.timeout_time) return null;
-    const sParts = r.scheduled_start.split(':').map(Number);
-    const tParts = r.timeout_time.split(':').map(Number);
-    if (sParts.length < 2 || tParts.length < 2) return null;
-    const startMins = sParts[0] * 60 + sParts[1];
-    const endMins = tParts[0] * 60 + tParts[1];
+    const startMins = parseTimeToMins(r.scheduled_start);
+    const endMins = parseTimeToMins(r.timeout_time);
+    if (startMins === null || endMins === null) return null;
     const diff = endMins - startMins;
     return diff > 0 ? diff : null;
   }).filter(v => v !== null);
