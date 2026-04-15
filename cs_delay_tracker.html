@@ -187,10 +187,16 @@
     text-align: center;
     user-select: none;
   }
+  .drum-item:hover { color: var(--white); }
   .drum-item.active {
-    color: var(--white);
-    font-weight: 600;
+    color: var(--accent);
+    font-weight: 700;
     font-size: 14px;
+  }
+  .drum-item.tapped {
+    background: rgba(56,189,248,0.18);
+    color: var(--accent);
+    border-radius: 6px;
   }
   .drum-no-results {
     height: 120px;
@@ -539,17 +545,19 @@
   }
   .inline-row .field { margin-bottom: 0; }
   .inline-row .field input[type="date"],
+  .inline-row .field input[type="time"],
   .inline-row .field select {
     height: 44px;
     padding: 0 8px;
     font-size: 12px;
+    line-height: 44px;
   }
   @media (max-width: 480px) {
     .inline-row { grid-template-columns: 1fr; }
     .inline-row .field { margin-bottom: 20px; }
     .inline-row .field input[type="date"],
-    .inline-row .field select { height: auto; padding: 12px 14px; font-size: 15px; }
-    .time-drum-wrap { height: auto; }
+    .inline-row .field input[type="time"],
+    .inline-row .field select { height: auto; padding: 12px 14px; font-size: 15px; line-height: normal; }
   }
 
   /* H&P TOGGLE */
@@ -930,7 +938,7 @@ function buildDrumTrack() {
   const pad = 42;
   let html = `<div class="drum-pad" style="height:${pad}px"></div>`;
   drumFiltered.forEach((p, i) => {
-    html += `<div class="drum-item${i === drumSelectedIdx ? ' active' : ''}" data-idx="${i}">${p}</div>`;
+    html += `<div class="drum-item${i === drumSelectedIdx ? ' active' : ''}" data-idx="${i}" onclick="tapDrumItem(${i})">${p}</div>`;
   });
   html += `<div class="drum-pad" style="height:${pad}px"></div>`;
   scroll.innerHTML = html;
@@ -974,6 +982,25 @@ function commitSelection(idx) {
   const name = drumFiltered[idx] || '';
   document.getElementById('surgeon-name').value = name;
   selectedPhysician = name;
+}
+
+function tapDrumItem(idx) {
+  // Scroll smoothly to the tapped item to centre it
+  scrollToIdx(idx, true);
+  drumSelectedIdx = idx;
+  commitSelection(idx);
+  // Flash tapped highlight
+  const scroll = document.getElementById('drum-scroll');
+  if (!scroll) return;
+  scroll.querySelectorAll('.drum-item').forEach(el => {
+    const i = parseInt(el.dataset.idx);
+    el.classList.toggle('active', i === idx);
+    el.classList.toggle('tapped', i === idx);
+  });
+  setTimeout(() => {
+    const el = scroll.querySelector(`.drum-item[data-idx="${idx}"]`);
+    if (el) el.classList.remove('tapped');
+  }, 400);
 }
 
 function filterDrum() {
