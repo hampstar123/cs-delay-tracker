@@ -103,18 +103,16 @@
   }
 
   .field { margin-bottom: 16px; }
-  .field label, label {
+  .field label {
     display: block;
     font-size: 13px;
     font-weight: 500;
     color: var(--text-muted);
     margin-bottom: 6px;
   }
-  .field label .req, label .req { color: var(--danger); margin-left: 2px; }
+  .field label .req { color: var(--danger); margin-left: 2px; }
 
-  .field input, .field select, .field textarea,
-  input:not([type=hidden]):not([type=radio]),
-  select, textarea {
+  .field input, .field select, .field textarea {
     width: 100%;
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -128,20 +126,19 @@
     -webkit-appearance: none;
     appearance: none;
   }
-  .field input:focus, .field select:focus, .field textarea:focus,
-  input:focus, select:focus, textarea:focus {
+  .field input:focus, .field select:focus, .field textarea:focus {
     border-color: var(--accent);
     box-shadow: none;
   }
   input[type="time"], input[type="date"] { color-scheme: dark; }
-  select {
+  .field select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8299' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 14px center;
     padding-right: 38px;
   }
   .field select option { background: var(--surface2); }
-  textarea { resize: vertical; min-height: 80px; }
+  .field textarea { resize: vertical; min-height: 80px; }
 
   /* PHYSICIAN DRUM ROLLER */
   .drum-wrap {
@@ -232,25 +229,25 @@
   .time-drum-wrap {
     display: flex;
     align-items: center;
-    background: var(--navy-mid);
+    background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
-    height: 44px;
+    height: 46px;
   }
   .time-drum-col {
     flex: 1;
     height: 100%;
     position: relative;
   }
-  .time-drum-col-ampm { flex: 0 0 44px; }
+  .time-drum-col-ampm { flex: 0 0 46px; }
   .time-drum-sep {
-    color: var(--gray);
+    color: var(--text-muted);
     font-size: 16px;
     font-weight: 600;
     flex-shrink: 0;
     padding: 0 1px;
-    line-height: 44px;
+    line-height: 46px;
   }
   .time-drum-viewport {
     position: relative;
@@ -268,11 +265,11 @@
   }
   .time-drum-viewport::before {
     top: 0;
-    background: linear-gradient(to bottom, var(--navy-mid) 0%, transparent 100%);
+    background: linear-gradient(to bottom, var(--surface2) 0%, transparent 100%);
   }
   .time-drum-viewport::after {
     bottom: 0;
-    background: linear-gradient(to top, var(--navy-mid) 0%, transparent 100%);
+    background: linear-gradient(to top, var(--surface2) 0%, transparent 100%);
   }
   .time-drum-band {
     position: absolute;
@@ -282,7 +279,7 @@
     height: 22px;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    background: rgba(37,99,235,0.13);
+    background: rgba(79,142,247,0.08);
     z-index: 1;
     pointer-events: none;
   }
@@ -300,15 +297,15 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    color: var(--gray);
+    color: var(--text-muted);
     scroll-snap-align: center;
     cursor: pointer;
     user-select: none;
     transition: color 0.1s, font-weight 0.1s;
-    font-family: 'DM Mono', monospace;
+    font-family: var(--mono);
   }
   .time-drum-item.active {
-    color: var(--white);
+    color: var(--text);
     font-weight: 600;
     font-size: 13px;
   }
@@ -490,20 +487,24 @@
     align-items: start;
   }
   .inline-row .field { margin-bottom: 0; }
-  .inline-row .field input[type="date"],
-  .inline-row .field input[type="time"],
+  .inline-row .field input,
   .inline-row .field select {
-    height: 46px;
-    padding: 0 10px;
-    font-size: 13px;
-    line-height: 46px;
+    height: 46px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+    line-height: 46px !important;
+    box-sizing: border-box;
   }
   @media (max-width: 480px) {
     .inline-row { grid-template-columns: 1fr; }
     .inline-row .field { margin-bottom: 16px; }
-    .inline-row .field input[type="date"],
-    .inline-row .field input[type="time"],
-    .inline-row .field select { height: auto; padding: 12px 14px; font-size: 15px; line-height: normal; }
+    .inline-row .field input,
+    .inline-row .field select {
+      height: auto !important;
+      padding: 12px 14px !important;
+      font-size: 15px !important;
+      line-height: normal !important;
+    }
   }
 
   /* H&P TOGGLE */
@@ -725,7 +726,7 @@
       </div>
     </div>
 
-    <div class="section-label" style="margin-top:8px;">Cause of Delay</div>
+    <div class="section-label" style="margin-top:28px;">Cause of Delay</div>
 
     <div class="field">
       <div class="cause-list" id="cause-list"></div>
@@ -930,7 +931,7 @@ function updateTimeOptions() {
 
 // ── DRUM ROLLER (scroll-snap based) ──
 const ITEM_H = 36;
-let drumFiltered = [...physicians];
+let drumFiltered = [];
 let drumSelectedIdx = 0;
 let drumScrollTimer = null;
 
@@ -1346,4 +1347,43 @@ function renderReport(data) {
           <tr>
             <th>Date</th><th>Surgeon</th><th>Location</th><th>MRN</th>
             <th>Sched. Start</th><th>Time-Out</th><th>Delay (min)</th>
-            <th>Cause</th><th>Comment</th><th>H&amp;
+            <th>Cause</th><th>Comment</th><th>H&amp;P</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+function calcDelay(scheduled, timeout) {
+  if (!scheduled || !timeout) return null;
+  const toMin = t => {
+    const s = String(t).trim();
+    const ampm = s.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (ampm) {
+      let h = parseInt(ampm[1]);
+      const m = parseInt(ampm[2]);
+      if (ampm[3].toUpperCase()==='PM' && h!==12) h+=12;
+      if (ampm[3].toUpperCase()==='AM' && h===12) h=0;
+      return h*60+m;
+    }
+    const plain = s.match(/(\d+):(\d+)/);
+    if (plain) return parseInt(plain[1])*60+parseInt(plain[2]);
+    return null;
+  };
+  const s = toMin(scheduled), to = toMin(timeout);
+  if (s === null || to === null) return null;
+  return to - s;
+}
+
+// ── TOAST ──
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
