@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>C/S Delay Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -616,6 +617,27 @@
   .roster-count {
     padding: 8px 14px; font-size: 12px;
     color: var(--text-muted); border-top: 1px solid var(--border); text-align: right;
+  }
+
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .chart-wrap h3 {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--mono);
   }
 
   /* REPORT */
@@ -1305,6 +1327,9 @@ function loadReport() {
     });
 }
 
+const CAUSE_COLORS = ['#7c5cfc','#4f8ef7','#a58cf8','#7aabfa','#7a8299'];
+let pieChart = null;
+
 function renderReport(data) {
   const rows = data.rows || [];
   if (!rows.length) {
@@ -1316,70 +1341,130 @@ function renderReport(data) {
   const total = rows.length;
   const delays = rows.map(r => calcDelay(r[4], r[5])).filter(d => d !== null);
   const avgDelay = delays.length ? Math.round(delays.reduce((a,b)=>a+b,0)/delays.length) : null;
+  const hpYes = rows.filter(r => (r[8]||'').toLowerCase() === 'yes').length;
+  const hpNo  = rows.filter(r => (r[8]||'').toLowerCase() === 'no').length;
 
+  // Cause counts
   const causeCounts = {};
   CAUSES.forEach(c => { causeCounts[c.name] = 0; });
   rows.forEach(r => {
     const k = r[6];
     if (k) causeCounts[k] = (causeCounts[k] || 0) + 1;
   });
-  const maxCount = Math.max(...Object.values(causeCounts), 1);
 
-  const breakdownHtml = Object.entries(causeCounts)
-    .filter(([,v]) => v > 0)
-    .sort((a,b) => b[1]-a[1])
-    .map(([name,count]) => `
+  const summaryData = CAUSES
+    .map((c, i) => ({ name: c.name, count: causeCounts[c.name] || 0, color: CAUSE_COLORS[i] }))
+    .filter(d => d.count > 0);
+
+  const maxCount = Math.max(...summaryData.map(d => d.count), 1);
+
+  const breakdownHtml = summaryData
+    .sort((a,b) => b.count - a.count)
+    .map(d => `
       <div class="breakdown-row">
-        <div class="breakdown-label">${name}</div>
-        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
-        <div class="breakdown-count">${count}</div>
+        <div class="breakdown-label">${d.name}</div>
+        <div class="breakdown-bar-wrap">
+          <div class="breakdown-bar" style="width:${Math.round(d.count/maxCount*100)}%;background:${d.color}"></div>
+        </div>
+        <div class="breakdown-count">${d.count}</div>
       </div>`).join('');
 
   const rowsHtml = rows.map(r => {
     const delay = calcDelay(r[4], r[5]);
     return `<tr>
-      <td>${r[2]||''}</td>
+      <td style="font-family:var(--mono);font-size:12px">${r[2]||''}</td>
       <td>${r[0]||''}</td>
-      <td>${r[1]||''}</td>
-      <td>${r[3]||''}</td>
-      <td>${r[4]||''}</td>
-      <td>${r[5]||''}</td>
-      <td><span class="delay-min">${delay !== null ? delay : '—'}</span></td>
+      <td style="font-size:12px">${r[1]||''}</td>
+      <td style="font-family:var(--mono);font-size:12px">${r[3]||''}</td>
+      <td style="font-family:var(--mono);font-size:12px">${r[4]||''}</td>
+      <td style="font-family:var(--mono);font-size:12px">${r[5]||''}</td>
+      <td><span class="delay-min">${delay !== null ? delay+'m' : '—'}</span></td>
       <td><span class="badge">${r[6]||''}</span></td>
       <td class="comment-cell">${r[7]||''}</td>
-      <td>${r[8]||''}</td>
+      <td style="font-size:12px;color:${(r[8]||'').toLowerCase()==='yes'?'var(--success)':(r[8]||'').toLowerCase()==='no'?'var(--danger)':'var(--text-muted)'}">${
+        (r[8]||'').toLowerCase()==='yes' ? '✓ Yes' :
+        (r[8]||'').toLowerCase()==='no'  ? '✗ No'  : (r[8]||'—')
+      }</td>
     </tr>`;
   }).join('');
 
   document.getElementById('report-content').innerHTML = `
     <div class="stats-grid">
       <div class="stat-card">
+        <span class="stat-value">${total}</span>
         <div class="stat-label">Total Delays</div>
-        <div class="stat-value">${total}</div>
       </div>
       <div class="stat-card">
+        <span class="stat-value">${avgDelay !== null ? avgDelay+'m' : '—'}</span>
         <div class="stat-label">Avg Delay</div>
-        <div class="stat-value">${avgDelay !== null ? avgDelay+'m' : '—'}</div>
-        <div class="stat-sub">minutes</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">${hpYes}</span>
+        <div class="stat-label">H&amp;P Timely</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">${hpNo}</span>
+        <div class="stat-label">H&amp;P Late</div>
       </div>
     </div>
 
-    <div class="section-title">Delay Cause Breakdown</div>
-    <div class="breakdown">${breakdownHtml || '<div style="color:var(--gray);font-size:13px">No data</div>'}</div>
+    <div class="chart-wrap">
+      <h3>Delay Causes</h3>
+      <canvas id="pie-chart" height="240"></canvas>
+    </div>
+
+    <div class="section-title">Breakdown by Cause</div>
+    <div class="breakdown" style="margin-bottom:28px">${breakdownHtml || '<div style="color:var(--text-muted);font-size:13px">No data</div>'}</div>
 
     <div class="section-title">All Entries</div>
-    <div class="table-wrap">
-      <table>
+    <div class="table-wrap" style="overflow-x:auto">
+      <table style="min-width:600px">
         <thead>
           <tr>
             <th>Date</th><th>Surgeon</th><th>Location</th><th>MRN</th>
-            <th>Sched. Start</th><th>Time-Out</th><th>Delay (min)</th>
+            <th>Sched.</th><th>Time-Out</th><th>Delay</th>
             <th>Cause</th><th>Comment</th><th>H&amp;P</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
+
+  // Draw doughnut chart
+  if (pieChart) { pieChart.destroy(); pieChart = null; }
+  const ctx = document.getElementById('pie-chart').getContext('2d');
+  pieChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: summaryData.map(d => d.name),
+      datasets: [{
+        data: summaryData.map(d => d.count),
+        backgroundColor: summaryData.map(d => d.color),
+        borderWidth: 2,
+        borderColor: '#181c27'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#7a8299',
+            font: { size: 11, family: 'DM Sans' },
+            boxWidth: 12,
+            padding: 12
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw/total*100)}%)`
+          }
+        }
+      },
+      cutout: '60%'
+    }
+  });
 }
 
 function calcDelay(scheduled, timeout) {
