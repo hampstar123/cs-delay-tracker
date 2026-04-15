@@ -3,649 +3,765 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CS Delay Tracker</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>C/S Delay Tracker</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
   :root {
-    --bg: #0f1117;
-    --surface: #181c27;
-    --surface2: #1e2333;
-    --border: #2a3045;
-    --accent: #4f8ef7;
-    --accent2: #7c5cfc;
-    --danger: #e85d75;
-    --warn: #f5a623;
-    --success: #3ecf8e;
-    --text: #e8ecf4;
-    --text-muted: #7a8299;
-    --text-dim: #4a5168;
-    --mono: 'DM Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
+    --navy: #0a1628;
+    --navy-mid: #112240;
+    --navy-light: #1a3358;
+    --blue: #2563eb;
+    --blue-light: #3b82f6;
+    --accent: #38bdf8;
+    --white: #f8fafc;
+    --gray: #94a3b8;
+    --red: #ef4444;
+    --green: #22c55e;
+    --border: rgba(59,130,246,0.2);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
     min-height: 100vh;
   }
 
-  /* ── NAV ── */
+  /* NAV */
   .nav {
+    background: var(--navy-mid);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
-  .nav-brand {
-    font-family: var(--mono);
+  .nav-title {
     font-size: 13px;
-    font-weight: 500;
-    color: var(--accent);
-    letter-spacing: 0.05em;
-  }
-  .nav-brand span { color: var(--text-muted); }
-  .nav-tabs { display: flex; gap: 6px; }
-  .tab-btn {
-    background: none;
-    border: 1px solid transparent;
-    color: var(--text-muted);
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .tab-btn.active {
-    background: var(--surface2);
-    border-color: var(--border);
-    color: var(--text);
-  }
-  .tab-btn:hover:not(.active) { color: var(--text); }
-
-  /* ── PAGES ── */
-  .page { display: none; padding: 24px 20px; max-width: 680px; margin: 0 auto; }
-  .page.active { display: block; }
-
-  /* ── FORM ── */
-  .form-header {
-    margin-bottom: 28px;
-  }
-  .form-header h1 {
-    font-size: 22px;
     font-weight: 600;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  .form-header p {
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-
-  .section-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
     color: var(--accent);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-bottom: 12px;
-    margin-top: 28px;
   }
-
-  .field { margin-bottom: 16px; }
-  label {
-    display: block;
+  .nav-btns { display: flex; gap: 8px; }
+  .nav-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 6px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--gray);
+    transition: all 0.18s;
   }
-  label .req { color: var(--danger); margin-left: 2px; }
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--navy-light);
+    color: var(--white);
+    border-color: var(--blue-light);
+  }
 
-  input, select, textarea {
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* FORM */
+  .form-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  .form-heading { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .form-subhead { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
+
+  .field { margin-bottom: 20px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 8px;
+  }
+  .field input, .field select, .field textarea {
     width: 100%;
-    background: var(--surface2);
+    background: var(--navy-mid);
     border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
+    border-radius: 10px;
     padding: 12px 14px;
-    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--white);
     outline: none;
-    transition: border-color 0.15s;
+    transition: border-color 0.18s, box-shadow 0.18s;
     -webkit-appearance: none;
-    appearance: none;
   }
-  input:focus, select:focus, textarea:focus {
-    border-color: var(--accent);
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--blue-light);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
   }
-  input[type="time"], input[type="date"] {
-    color-scheme: dark;
-  }
-  select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8299' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 38px;
-  }
-  textarea { resize: vertical; min-height: 80px; }
+  .field select option { background: var(--navy-mid); }
 
-  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-
-  .cause-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .cause-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    background: var(--surface2);
+  /* PHYSICIAN DRUM ROLLER */
+  .drum-wrap {
+    background: var(--navy-mid);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .drum-viewport {
+    position: relative;
+    height: 120px;
+    overflow: hidden;
+  }
+
+  /* top/bottom fade */
+  .drum-viewport::before,
+  .drum-viewport::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 36px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .drum-viewport::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--navy-mid) 0%, transparent 100%);
+  }
+  .drum-viewport::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--navy-mid) 0%, transparent 100%);
+  }
+
+  /* centre-line selection band */
+  .drum-band {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 36px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: rgba(37,99,235,0.13);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* the scrollable list itself */
+  .drum-scroll {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .drum-scroll::-webkit-scrollbar { display: none; }
+
+  /* spacer pads so first/last items can reach centre */
+  .drum-pad {
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  .drum-item {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--gray);
+    scroll-snap-align: center;
+    cursor: pointer;
+    transition: color 0.12s, font-weight 0.12s;
+    padding: 0 12px;
+    text-align: center;
+    user-select: none;
+  }
+  .drum-item.active {
+    color: var(--white);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .drum-no-results {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+    font-size: 13px;
+  }
+
+  /* TIME DRUM PICKER */
+  .time-drum-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 44px;
+  }
+  .time-drum-col {
+    flex: 1;
+    height: 100%;
+    position: relative;
+  }
+  .time-drum-col-ampm { flex: 0 0 44px; }
+  .time-drum-sep {
+    color: var(--gray);
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+    padding: 0 1px;
+    line-height: 44px;
+  }
+  .time-drum-viewport {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+  }
+  .time-drum-viewport::before,
+  .time-drum-viewport::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 13px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .time-drum-viewport::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--navy-mid) 0%, transparent 100%);
+  }
+  .time-drum-viewport::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--navy-mid) 0%, transparent 100%);
+  }
+  .time-drum-band {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 22px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: rgba(37,99,235,0.13);
+    z-index: 1;
+    pointer-events: none;
+  }
+  .time-drum-scroll {
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .time-drum-scroll::-webkit-scrollbar { display: none; }
+  .time-drum-item {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--gray);
+    scroll-snap-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.1s, font-weight 0.1s;
+    font-family: 'DM Mono', monospace;
+  }
+  .time-drum-item.active {
+    color: var(--white);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .cause-list { display: flex; flex-direction: column; gap: 10px; }
+  .cause-card {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
     padding: 14px;
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition: all 0.18s;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
   }
-  .cause-option:hover { border-color: var(--accent); }
-  .cause-option.selected {
-    border-color: var(--accent);
-    background: rgba(79,142,247,0.08);
-  }
-  .cause-option input[type="radio"] {
-    display: none;
-  }
-  .cause-text { flex: 1; }
-  .cause-title {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    margin-bottom: 3px;
-  }
-  .cause-desc {
-    font-size: 12px;
-    color: var(--text-muted);
-    line-height: 1.5;
-  }
-  .cause-badge {
-    font-family: var(--mono);
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-weight: 500;
+  .cause-card:hover { border-color: var(--blue-light); background: var(--navy-light); }
+  .cause-card.selected { border-color: var(--blue); background: rgba(37,99,235,0.12); }
+  .cause-radio {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--gray);
     flex-shrink: 0;
     margin-top: 2px;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
   }
-  .badge-anesthesia { background: rgba(124,92,252,0.2); color: #a58cf8; }
-  .badge-nursing { background: rgba(79,142,247,0.2); color: #7aabfa; }
-  .badge-other { background: rgba(122,130,153,0.2); color: #9aa0b4; }
+  .cause-card.selected .cause-radio { border-color: var(--blue); background: var(--blue); }
+  .cause-radio-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .cause-card.selected .cause-radio-dot { opacity: 1; }
+  .cause-content { flex: 1; min-width: 0; }
+  .cause-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .cause-desc { font-size: 12px; color: var(--gray); line-height: 1.5; }
+  .cause-comment { margin-top: 10px; display: none; }
+  .cause-card.selected .cause-comment { display: block; }
+  .cause-comment-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .cause-comment textarea {
+    width: 100%;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--white);
+    outline: none;
+    resize: vertical;
+    min-height: 68px;
+    transition: border-color 0.18s;
+  }
+  .cause-comment textarea:focus { border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
 
+  /* SUBMIT */
+  .submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s;
+    margin-top: 8px;
+  }
+  .submit-btn:hover { background: var(--blue-light); }
+  .submit-btn:disabled { background: var(--navy-light); color: var(--gray); cursor: not-allowed; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: transform 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.error { background: var(--red); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* MODAL */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10,22,40,0.88);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: min(380px, 90vw);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+  .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--gray); margin-bottom: 20px; }
+  .modal-pw-input {
+    width: 100%;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    letter-spacing: 0.25em;
+    color: var(--white);
+    outline: none;
+    text-align: center;
+    margin-bottom: 10px;
+    transition: border-color 0.18s;
+  }
+  .modal-pw-input:focus { border-color: var(--blue-light); }
+  .modal-err { font-size: 12px; color: var(--red); margin-bottom: 12px; display: none; text-align: center; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--gray);
+    transition: all 0.15s;
+  }
+  .modal-btns button.confirm { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .modal-btns button.confirm:hover { background: var(--blue-light); }
+
+  /* ROSTER VIEW */
+  .roster-wrap {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  .roster-heading { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .roster-subhead { font-size: 13px; color: var(--gray); margin-bottom: 24px; }
+  .roster-add { display: flex; gap: 10px; margin-bottom: 20px; }
+  .roster-add input {
+    flex: 1;
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--white);
+    outline: none;
+    transition: border-color 0.18s;
+  }
+  .roster-add input:focus { border-color: var(--blue-light); }
+  .roster-add button {
+    padding: 11px 18px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .roster-add button:hover { background: var(--blue-light); }
+  .roster-list-container {
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .roster-search {
+    display: flex; align-items: center;
+    gap: 8px; padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .roster-search input {
+    background: transparent; border: none; outline: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--white); width: 100%;
+  }
+  .roster-search input::placeholder { color: var(--gray); }
+  .roster-physician-list { max-height: 450px; overflow-y: auto; }
+  .roster-physician-list::-webkit-scrollbar { width: 4px; }
+  .roster-physician-list::-webkit-scrollbar-thumb { background: var(--navy-light); border-radius: 2px; }
+  .roster-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(59,130,246,0.07);
+    transition: background 0.12s;
+  }
+  .roster-item:last-child { border-bottom: none; }
+  .roster-item:hover { background: var(--navy-light); }
+  .roster-item-name { font-size: 14px; }
+  .roster-delete {
+    background: transparent; border: none;
+    color: var(--gray); cursor: pointer;
+    padding: 4px 8px; border-radius: 6px;
+    font-size: 18px; line-height: 1;
+    transition: color 0.15s, background 0.15s;
+  }
+  .roster-delete:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+  .roster-count {
+    padding: 8px 14px; font-size: 12px;
+    color: var(--gray); border-top: 1px solid var(--border); text-align: right;
+  }
+
+  /* SECTION LABELS */
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    margin-top: 4px;
+  }
+
+  /* RED ASTERISK */
+  .req { color: #ef4444; font-weight: 700; margin-left: 2px; }
+
+  /* INLINE ROW */
+  .inline-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  .inline-row .field { margin-bottom: 0; }
+  .inline-row .field input[type="date"],
+  .inline-row .field select {
+    height: 44px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  @media (max-width: 480px) {
+    .inline-row { grid-template-columns: 1fr; }
+    .inline-row .field { margin-bottom: 20px; }
+    .inline-row .field input[type="date"],
+    .inline-row .field select { height: auto; padding: 12px 14px; font-size: 15px; }
+    .time-drum-wrap { height: auto; }
+  }
+
+  /* H&P TOGGLE */
   .hp-toggle {
     display: flex;
     gap: 10px;
   }
   .hp-btn {
     flex: 1;
-    background: var(--surface2);
+    padding: 12px;
+    background: var(--navy-mid);
     border: 1px solid var(--border);
-    color: var(--text-muted);
-    font-family: var(--sans);
-    font-size: 14px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
     font-weight: 500;
-    padding: 11px;
-    border-radius: 8px;
+    color: var(--gray);
     cursor: pointer;
     transition: all 0.15s;
   }
-  .hp-btn.selected-yes {
-    border-color: var(--success);
-    color: var(--success);
-    background: rgba(62,207,142,0.08);
-  }
-  .hp-btn.selected-no {
-    border-color: var(--danger);
-    color: var(--danger);
-    background: rgba(232,93,117,0.08);
-  }
-
-  .submit-btn {
-    width: 100%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    font-family: var(--sans);
-    font-size: 16px;
-    font-weight: 600;
-    padding: 15px;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-top: 32px;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-  .submit-btn:hover { opacity: 0.9; }
-  .submit-btn:active { transform: scale(0.99); }
-  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--success);
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
-    padding: 12px 24px;
-    border-radius: 100px;
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    z-index: 999;
-    white-space: nowrap;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-  .toast.error { background: var(--danger); }
-
-  /* ── ADMIN LOGIN ── */
-  .login-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    gap: 16px;
-  }
-  .login-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 32px;
-    width: 100%;
-    max-width: 340px;
-    text-align: center;
-  }
-  .login-box h2 { font-size: 18px; margin-bottom: 6px; }
-  .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
-  .login-btn {
-    width: 100%;
-    background: var(--accent2);
-    color: #fff;
-    border: none;
-    font-family: var(--sans);
-    font-size: 15px;
-    font-weight: 600;
-    padding: 13px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 12px;
-    transition: opacity 0.15s;
-  }
-  .login-btn:hover { opacity: 0.85; }
-
-  /* ── REPORT ── */
-  .report-controls {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-    flex-wrap: wrap;
-    margin-bottom: 28px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-  }
-  .report-controls .field { margin-bottom: 0; flex: 1; min-width: 120px; }
-  .report-controls label { font-size: 12px; }
-  .filter-btn {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 12px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    white-space: nowrap;
-    height: 46px;
-  }
-
-  .stat-row {
+  .hp-btn:hover { background: var(--navy-light); color: var(--white); border-color: var(--blue-light); }
+  .hp-btn.active { background: rgba(37,99,235,0.18); color: var(--accent); border-color: var(--blue); }
+  .report-wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+  .report-heading { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .report-subhead { font-size: 13px; color: var(--gray); margin-bottom: 24px; }
+  .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-    margin-bottom: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
+    gap: 14px; margin-bottom: 28px;
   }
   .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px;
   }
-  .stat-num {
-    font-family: var(--mono);
-    font-size: 28px;
-    font-weight: 500;
-    color: var(--accent);
-    display: block;
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray); margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 600; color: var(--accent); }
+  .stat-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--gray);
+    margin-bottom: 12px; margin-top: 28px;
   }
-  .stat-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-  }
-
-  .chart-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 24px;
-    max-width: 360px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .chart-wrap h3 {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-family: var(--mono);
-  }
-
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-  .table-title {
-    padding: 14px 18px;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
+  .breakdown { display: flex; flex-direction: column; gap: 10px; }
+  .breakdown-row { display: flex; align-items: center; gap: 12px; }
+  .breakdown-label { font-size: 12px; color: var(--gray); min-width: 220px; }
+  .breakdown-bar-wrap { flex: 1; background: var(--navy-light); border-radius: 4px; height: 8px; overflow: hidden; }
+  .breakdown-bar { height: 100%; background: var(--blue); border-radius: 4px; }
+  .breakdown-count { font-size: 12px; color: var(--white); width: 24px; text-align: right; }
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--navy-light); }
   th {
-    text-align: left;
-    padding: 10px 18px;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
+    padding: 12px 14px; text-align: left;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--gray); white-space: nowrap;
   }
   td {
-    padding: 11px 18px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    vertical-align: middle;
+    padding: 11px 14px; border-top: 1px solid rgba(59,130,246,0.07);
+    color: var(--white); vertical-align: top;
   }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
+  tr:hover td { background: rgba(59,130,246,0.05); }
+  .badge {
+    display: inline-block; padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: rgba(37,99,235,0.2); color: var(--accent); white-space: nowrap;
+  }
+  .delay-min { font-family: 'DM Mono', monospace; color: var(--accent); }
+  .comment-cell { font-size: 12px; color: var(--gray); max-width: 160px; word-break: break-word; }
+  .report-loading, .report-empty { padding: 48px; text-align: center; color: var(--gray); font-size: 14px; }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border); border-top-color: var(--blue);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  .pct-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  @media (max-width: 480px) {
+    .nav-title { font-size: 11px; }
+    .nav-btn { padding: 6px 10px; font-size: 12px; }
+    .breakdown-label { min-width: 140px; font-size: 11px; }
   }
-  .bar-track {
-    flex: 1;
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-  .bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.4s ease;
-  }
-  .pct-num { font-family: var(--mono); font-size: 12px; color: var(--text-muted); min-width: 36px; text-align: right; }
-
-  .detail-table-wrap {
-    overflow-x: auto;
-  }
-  .detail-table-wrap table { min-width: 560px; }
-
-  .export-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 500;
-    padding: 10px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-bottom: 16px;
-    transition: border-color 0.15s;
-  }
-  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .empty-state {
-    text-align: center;
-    padding: 48px 20px;
-    color: var(--text-muted);
-    font-size: 14px;
-  }
-  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
-
-  .logout-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    font-family: var(--sans);
-    font-size: 12px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .logout-btn:hover { color: var(--danger); border-color: var(--danger); }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav class="nav">
-  <div class="nav-brand">CS<span>/</span>DELAY</div>
-  <div class="nav-tabs">
-    <button class="tab-btn active" onclick="showPage('form')">Log Delay</button>
-    <button class="tab-btn" onclick="showPage('admin')">Report</button>
+  <span class="nav-title">C/S Delay Tracker</span>
+  <div class="nav-btns">
+    <button class="nav-btn active" onclick="showView('log')">Log Delay</button>
+    <button class="nav-btn" onclick="openReport()">Report</button>
+    <button class="nav-btn" onclick="openRoster()">Roster</button>
   </div>
 </nav>
 
-<!-- ══════════════ FORM PAGE ══════════════ -->
-<div id="page-form" class="page active">
-  <div class="form-header">
-    <h1>Log OR Delay</h1>
-    <p>Record a scheduled cesarean section delay for tracking and analysis.</p>
-  </div>
+<!-- LOG DELAY VIEW -->
+<div id="view-log" class="view active">
+  <div class="form-wrap">
+    <div class="form-heading">Log OR Delay</div>
+    <div class="form-subhead">Record a scheduled cesarean section delay for tracking and analysis</div>
 
-  <div class="section-label">Case Information</div>
+    <div class="section-label">Case Information</div>
 
-  <div class="field">
-    <label>Surgeon Name <span class="req">*</span></label>
-    <input type="text" id="surgeon" placeholder="Dr. Last Name" autocomplete="name">
-  </div>
-
-  <div class="field">
-    <label>OR Location <span class="req">*</span></label>
-    <select id="location">
-      <option value="">Select location…</option>
-      <option>FMC L&amp;D</option>
-      <option>OMC L&amp;D</option>
-      <option>FMC Main OR L&amp;D</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>MRN <span class="req">*</span></label>
-    <input type="text" id="mrn" placeholder="Patient MRN" inputmode="numeric">
-  </div>
-
-  <div class="row-3">
     <div class="field">
-      <label>Date <span class="req">*</span></label>
-      <input type="date" id="case_date">
-    </div>
-    <div class="field">
-      <label>Scheduled Start <span class="req">*</span></label>
-      <input type="time" id="scheduled_start">
-    </div>
-    <div class="field">
-      <label>First Time-Out <span class="req">*</span></label>
-      <input type="time" id="timeout_time">
-    </div>
-  </div>
-
-  <div class="section-label">Cause of Delay</div>
-  <div class="cause-grid" id="cause-grid">
-
-    <label class="cause-option" onclick="selectCause(this)">
-      <input type="radio" name="cause" value="1">
-      <span class="cause-badge badge-anesthesia">1</span>
-      <div class="cause-text">
-        <div class="cause-title">Anesthesia Bump</div>
-        <div class="cause-desc">One OR in use or held for unscheduled case; anesthesiologist reports no second team available to run a second OR.</div>
-      </div>
-    </label>
-
-    <label class="cause-option" onclick="selectCause(this)">
-      <input type="radio" name="cause" value="2">
-      <span class="cause-badge badge-nursing">2</span>
-      <div class="cause-text">
-        <div class="cause-title">Nursing Bump</div>
-        <div class="cause-desc">One OR in use or held for unscheduled case; charge nurse reports insufficient staff to run a second OR.</div>
-      </div>
-    </label>
-
-    <label class="cause-option" onclick="selectCause(this)">
-      <input type="radio" name="cause" value="3">
-      <span class="cause-badge badge-anesthesia">3</span>
-      <div class="cause-text">
-        <div class="cause-title">Unwarranted Staggering — Anesthesia</div>
-        <div class="cause-desc">One OR in use or held; a second anesthesia team is available but the case is delayed preemptively in anticipation of a potential third case.</div>
-      </div>
-    </label>
-
-    <label class="cause-option" onclick="selectCause(this)">
-      <input type="radio" name="cause" value="4">
-      <span class="cause-badge badge-nursing">4</span>
-      <div class="cause-text">
-        <div class="cause-title">Unwarranted Staggering — Nursing</div>
-        <div class="cause-desc">One OR in use or held; nursing staff is available but charge nurse delays the case preemptively in anticipation of a potential third case.</div>
-      </div>
-    </label>
-
-    <label class="cause-option" onclick="selectCause(this)">
-      <input type="radio" name="cause" value="Other">
-      <span class="cause-badge badge-other">5</span>
-      <div class="cause-text">
-        <div class="cause-title">Other</div>
-        <div class="cause-desc">Please describe below.</div>
-      </div>
-    </label>
-
-  </div>
-
-  <div class="field" id="other-field" style="display:none; margin-top:12px;">
-    <label>Describe Other Cause <span class="req">*</span></label>
-    <textarea id="other_cause" placeholder="Briefly describe the cause of delay…"></textarea>
-  </div>
-
-  <div class="section-label">H&amp;P Documentation (Optional)</div>
-  <div class="field">
-    <label>Was the interval H&amp;P signed in a timely manner?</label>
-    <div class="hp-toggle">
-      <button type="button" class="hp-btn" id="hp-yes" onclick="setHP('yes')">✓ Yes</button>
-      <button type="button" class="hp-btn" id="hp-no" onclick="setHP('no')">✗ No</button>
-    </div>
-  </div>
-
-  <button class="submit-btn" onclick="submitForm()">Submit Delay Report</button>
-  <div style="height:40px"></div>
-</div>
-
-<!-- ══════════════ ADMIN PAGE ══════════════ -->
-<div id="page-admin" class="page">
-
-  <!-- Login -->
-  <div id="admin-login">
-    <div class="login-wrap">
-      <div class="login-box">
-        <h2>🔒 Admin Access</h2>
-        <p>Enter the admin password to view delay reports.</p>
-        <div class="field">
-          <input type="password" id="admin-pw" placeholder="Password" onkeydown="if(event.key==='Enter')checkLogin()">
+      <label>Surgeon <span class="req">*</span></label>
+      <div class="drum-wrap">
+        <div class="drum-viewport" id="drum-viewport">
+          <div class="drum-band"></div>
+          <div class="drum-scroll" id="drum-scroll"></div>
         </div>
-        <button class="login-btn" onclick="checkLogin()">Sign In</button>
-        <p id="login-err" style="color:var(--danger);font-size:12px;margin-top:12px;display:none;">Incorrect password.</p>
       </div>
-    </div>
-  </div>
-
-  <!-- Report -->
-  <div id="admin-report" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <div>
-        <div style="font-size:20px;font-weight:600;">Delay Report</div>
-        <div style="font-size:13px;color:var(--text-muted);">Scheduled C-section OR delays</div>
-      </div>
-      <button class="logout-btn" onclick="logout()">Sign out</button>
+      <input type="hidden" id="surgeon-name">
     </div>
 
-    <div class="report-controls">
+    <div class="field">
+      <label>OR Location <span class="req">*</span></label>
+      <select id="location" onchange="updateTimeOptions()">
+        <option value="">Select location…</option>
+        <option value="FMC L&D">FMC L&amp;D</option>
+        <option value="OMC L&D">OMC L&amp;D</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>MRN <span class="req">*</span></label>
+      <input type="text" id="mrn" placeholder="Patient MRN" inputmode="numeric">
+    </div>
+
+    <!-- Inline row: Date | Sched. Time | Time-Out -->
+    <div class="inline-row">
       <div class="field">
-        <label>From</label>
-        <input type="date" id="filter-from">
+        <label>Date <span class="req">*</span></label>
+        <input type="date" id="case-date">
       </div>
       <div class="field">
-        <label>To</label>
-        <input type="date" id="filter-to">
-      </div>
-      <div class="field" style="min-width:140px;">
-        <label>Location</label>
-        <select id="filter-loc">
-          <option value="">All locations</option>
-          <option value="FMC L&D">FMC L&D</option>
-          <option value="OMC L&D">OMC L&D</option>
-          <option value="FMC Main OR L&D">FMC Main OR L&D</option>
+        <label>Scheduled Start <span class="req">*</span></label>
+        <select id="scheduled-time">
+          <option value="">Location first…</option>
         </select>
       </div>
-      <button class="filter-btn" onclick="loadReport()">Apply</button>
+      <div class="field">
+        <label>First Time-Out <span class="req">*</span></label>
+        <input type="time" id="timeout-time">
+      </div>
     </div>
 
-    <div id="report-content">
-      <div class="empty-state">
-        <div class="icon">📋</div>
-        Set a date range and click Apply to generate the report.
+    <div class="section-label" style="margin-top:8px;">Cause of Delay</div>
+
+    <div class="field">
+      <div class="cause-list" id="cause-list"></div>
+      <input type="hidden" id="delay-cause">
+    </div>
+
+    <div class="section-label">H&amp;P Documentation <span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:var(--gray)">(Optional)</span></div>
+    <div style="font-size:13px;color:var(--gray);margin-top:-10px;margin-bottom:14px;">Was the interval H&amp;P signed in a timely manner?</div>
+
+    <div class="field hp-toggle-field">
+      <div class="hp-toggle">
+        <button type="button" class="hp-btn" id="hp-yes" onclick="setHP('Yes')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>Yes
+        </button>
+        <button type="button" class="hp-btn" id="hp-no" onclick="setHP('No')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>No
+        </button>
       </div>
+      <input type="hidden" id="hp-timeliness">
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitForm()">Submit Delay</button>
+  </div>
+</div>
+
+<!-- REPORT VIEW -->
+<div id="view-report" class="view">
+  <div class="report-wrap">
+    <div class="report-heading">Delay Report</div>
+    <div class="report-subhead">Summary and raw data for all logged delays</div>
+    <div id="report-content"><div class="report-loading"><div class="spinner"></div>Loading…</div></div>
+  </div>
+</div>
+
+<!-- ROSTER VIEW -->
+<div id="view-roster" class="view">
+  <div class="roster-wrap">
+    <div class="roster-heading">Physician Roster</div>
+    <div class="roster-subhead">Add or remove physicians available in the delay form</div>
+    <div class="roster-add">
+      <input type="text" id="new-physician" placeholder="First Last (e.g. Jane Smith)" onkeydown="if(event.key==='Enter')addPhysician()">
+      <button onclick="addPhysician()">+ Add</button>
+    </div>
+    <div class="roster-list-container">
+      <div class="roster-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search roster…" oninput="renderRoster(this.value)">
+      </div>
+      <div class="roster-physician-list" id="roster-physician-list"></div>
+      <div class="roster-count" id="roster-count"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal-bg" id="pw-modal">
+  <div class="modal">
+    <h2 id="pw-modal-title">Protected Area</h2>
+    <p id="pw-modal-desc">Enter the admin password to continue.</p>
+    <input type="password" class="modal-pw-input" id="pw-input" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    <div class="modal-err" id="pw-err">Incorrect password. Try again.</div>
+    <div class="modal-btns">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="confirm" onclick="checkPassword()">Unlock</button>
     </div>
   </div>
 </div>
@@ -653,363 +769,572 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
 const ADMIN_PASSWORD = '123456';
 
-// ── CAUSE LABELS ────────────────────────────────────────
-const CAUSE_LABELS = {
-  '1': 'Anesthesia Bump',
-  '2': 'Nursing Bump',
-  '3': 'Unwarranted Staggering — Anesthesia',
-  '4': 'Unwarranted Staggering — Nursing',
-  'Other': 'Other'
+const DEFAULT_PHYSICIANS = [
+  "Adrianna Barrett","Allyson Wang","Amy Zhai","Anisah Ndifor","Avisa Abaian",
+  "Bria Pettway","Camila Bahamon","Joe Casillas","Cecilia Phong","Ceecy Yang",
+  "Cindy Chau","Divya Arunachalam","Diwata Bose","Elena Bronshtein","Erica Medina",
+  "Fabiana Kim","Gayla Ivery","Gohar Stepanyan","Guillermo Giron Solano","Heidi Chew",
+  "Ivan Huang","Jane Yeo","Jennifer Hall","Jerrelyn Inocencio-Diaz","Jerry Tsai",
+  "Jessica Iskander","Jordana Kincey","Joy Kim","Karen Fernandes","Khosro Iromloo",
+  "Lorraine Atilano","Mabel Mora Lavergne","Marisol Flores","Maryam Fakhrai","Michelle Tanzil",
+  "Mishka Peart","Mona Dave","Monica Gutierrez","Monica Perez","Monika Cluney",
+  "My-Linh Pham","Nora Bassiouni","Rachel Sloan","Rafik Hodeib","Ravi Mamilla",
+  "Reshma Parikh","Ronald Picazo","Sabrina Yan","Sandy Huynh","Sara Noroozkhani",
+  "Sonty Man","Suzanne Cao","Thuy Mai","Tina Paul","Tinu Bello",
+  "Tricia Fynewever","Triet Le","Yarameekah Adams","Berneva Adams","Jessica Jocson",
+  "Karl Urban","Mark Wu","Nichole Adair","Tiana Guillaume"
+].sort((a,b) => a.localeCompare(b));
+
+const CAUSES = [
+  {
+    id: 'anesthesia-bump',
+    name: 'Anesthesia Bump',
+    desc: 'Scheduled C-section delayed — anesthesia reports one OR in use or held for an unscheduled case, with no second team available.'
+  },
+  {
+    id: 'nursing-bump',
+    name: 'Nursing Bump',
+    desc: 'Scheduled C-section delayed — nursing reports one OR in use or held for an unscheduled case, with insufficient staff for a second OR.'
+  },
+  {
+    id: 'unwarranted-anesthesia',
+    name: 'Unwarranted Delay by Anesthesia',
+    desc: 'Scheduled C-section delayed despite an available OR, anesthesia team, nursing team, and clearance from the on-call OB team.'
+  },
+  {
+    id: 'unwarranted-nursing',
+    name: 'Unwarranted Delay by Nursing',
+    desc: 'Scheduled C-section delayed despite an available OR, anesthesia team, nursing team, and clearance from the on-call OB team.'
+  },
+  {
+    id: 'md-hold',
+    name: 'MD Hold',
+    desc: 'Scheduled C-sections held by the on-call OB team due to more than one higher-priority unscheduled case.'
+  }
+];
+
+const TIME_OPTIONS = {
+  'FMC L&D': ['7:30 AM','9:30 AM','11:00 AM','1:00 PM'],
+  'OMC L&D': ['7:30 AM','11:00 AM','1:00 PM']
 };
-const CAUSE_COLORS = ['#7c5cfc','#4f8ef7','#a58cf8','#7aabfa','#7a8299'];
 
-// ── STATE ────────────────────────────────────────────────
-let hpValue = '';
-let allRows = [];
-let pieChart = null;
-let selectedCause = '';
+let physicians = [...DEFAULT_PHYSICIANS];
+let selectedPhysician = '';
+let selectedCauseId = '';
+let pendingView = '';
+let reportUnlocked = false;
+let rosterUnlocked = false;
 
-// ── LOCAL DATE HELPER ────────────────────────────────────
-function localDateStr(d) {
-  d = d || new Date();
-  const yr = d.getFullYear();
-  const mo = String(d.getMonth()+1).padStart(2,'0');
-  const dy = String(d.getDate()).padStart(2,'0');
-  return yr + '-' + mo + '-' + dy;
-}
-
-// Pre-fill date field with today on load
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('case_date').value = localDateStr();
+document.addEventListener('DOMContentLoaded', () => {
+  setTodayDate();
+  buildCauseList();
+  initDrum();
+  initTimeDrum();
+  loadPhysiciansFromSheet();
 });
 
-// ── UI HELPERS ───────────────────────────────────────────
-function showPage(p) {
-  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('page-' + p).classList.add('active');
-  event.target.classList.add('active');
+function setTodayDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  document.getElementById('case-date').value = `${y}-${m}-${day}`;
 }
 
-function selectCause(label) {
-  document.querySelectorAll('.cause-option').forEach(el => el.classList.remove('selected'));
-  label.classList.add('selected');
-  selectedCause = label.querySelector('input[type="radio"]').value;
-  label.querySelector('input[type="radio"]').checked = true;
-  document.getElementById('other-field').style.display = selectedCause === 'Other' ? 'block' : 'none';
+// ── VIEWS ──
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['log','report','roster'][i] === name);
+  });
 }
 
-function setHP(v) {
-  hpValue = v;
-  document.getElementById('hp-yes').className = 'hp-btn' + (v === 'yes' ? ' selected-yes' : '');
-  document.getElementById('hp-no').className = 'hp-btn' + (v === 'no' ? ' selected-no' : '');
+function openReport() {
+  if (reportUnlocked) { showView('report'); loadReport(); return; }
+  pendingView = 'report';
+  openModal('Report Access','Enter the admin password to view the report.');
+}
+function openRoster() {
+  if (rosterUnlocked) { showView('roster'); renderRoster(''); return; }
+  pendingView = 'roster';
+  openModal('Roster Access','Enter the admin password to manage the roster.');
 }
 
-function showToast(msg, isError) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (isError ? ' error' : '') + ' show';
-  setTimeout(() => t.className = 'toast', 3000);
+// ── MODAL ──
+function openModal(title, desc) {
+  document.getElementById('pw-modal-title').textContent = title;
+  document.getElementById('pw-modal-desc').textContent = desc;
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').style.display = 'none';
+  document.getElementById('pw-modal').classList.add('show');
+  setTimeout(() => document.getElementById('pw-input').focus(), 120);
 }
-
-// ── FORM SUBMIT ──────────────────────────────────────────
-async function submitForm() {
-  const surgeon = document.getElementById('surgeon').value.trim();
-  const location = document.getElementById('location').value;
-  const date = document.getElementById('case_date').value;
-  const mrn = document.getElementById('mrn').value.trim();
-  const sched = document.getElementById('scheduled_start').value;
-  const tout = document.getElementById('timeout_time').value;
-  const cause = selectedCause;
-  const otherCause = document.getElementById('other_cause').value.trim();
-
-  if (!surgeon || !location || !date || !mrn || !sched || !tout || !cause) {
-    showToast('Please fill in all required fields.', true); return;
-  }
-  if (cause === 'Other' && !otherCause) {
-    showToast('Please describe the cause.', true); return;
-  }
-
-  const btn = document.querySelector('.submit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
-
-  const payload = {
-    surgeon, location, date, mrn,
-    scheduled_start: sched,
-    timeout_time: tout,
-    cause,
-    cause_label: CAUSE_LABELS[cause] || cause,
-    other_cause: otherCause,
-    hp_signed: hpValue || 'Not answered',
-    submitted_at: new Date().toISOString()
-  };
-
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    showToast('✓ Delay logged successfully');
-    resetForm();
-  } catch (e) {
-    showToast('Submission failed — check connection.', true);
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Submit Delay Report';
+function closeModal() {
+  document.getElementById('pw-modal').classList.remove('show');
+  pendingView = '';
 }
-
-function resetForm() {
-  document.getElementById('surgeon').value = '';
-  document.getElementById('location').value = '';
-  document.getElementById('case_date').value = localDateStr(); // reset to today
-  document.getElementById('mrn').value = '';
-  document.getElementById('scheduled_start').value = '';
-  document.getElementById('timeout_time').value = '';
-  document.querySelectorAll('.cause-option').forEach(el => el.classList.remove('selected'));
-  document.querySelectorAll('input[name="cause"]').forEach(el => el.checked = false);
-  selectedCause = '';
-  document.getElementById('other-field').style.display = 'none';
-  document.getElementById('other_cause').value = '';
-  hpValue = '';
-  setHP('');
-}
-
-// ── ADMIN ────────────────────────────────────────────────
-function checkLogin() {
-  const pw = document.getElementById('admin-pw').value;
-  if (pw === ADMIN_PASSWORD) {
-    document.getElementById('admin-login').style.display = 'none';
-    document.getElementById('admin-report').style.display = 'block';
-    setDefaultDates();
-    loadReport();
+function checkPassword() {
+  if (document.getElementById('pw-input').value === ADMIN_PASSWORD) {
+    document.getElementById('pw-modal').classList.remove('show');
+    if (pendingView === 'report') { reportUnlocked = true; showView('report'); loadReport(); }
+    if (pendingView === 'roster') { rosterUnlocked = true; showView('roster'); renderRoster(''); }
+    pendingView = '';
   } else {
-    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('pw-err').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
   }
 }
 
-function logout() {
-  document.getElementById('admin-login').style.display = 'block';
-  document.getElementById('admin-report').style.display = 'none';
-  document.getElementById('admin-pw').value = '';
-  allRows = [];
+// ── TIME OPTIONS ──
+function updateTimeOptions() {
+  const loc = document.getElementById('location').value;
+  const sel = document.getElementById('scheduled-time');
+  if (!loc) { sel.innerHTML = '<option value="">Select location first…</option>'; return; }
+  const times = TIME_OPTIONS[loc] || [];
+  sel.innerHTML = '<option value="">Select time…</option>' +
+    times.map(t => `<option value="${t}">${t}</option>`).join('');
 }
 
-function setDefaultDates() {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 30);
-  document.getElementById('filter-to').value = localDateStr(to);
-  document.getElementById('filter-from').value = localDateStr(from);
+// ── DRUM ROLLER (scroll-snap based) ──
+const ITEM_H = 36;
+let drumFiltered = [...physicians];
+let drumSelectedIdx = 0;
+let drumScrollTimer = null;
+
+function initDrum() {
+  drumFiltered = [...physicians];
+  drumSelectedIdx = 0;
+  buildDrumTrack();
+  const scroll = document.getElementById('drum-scroll');
+  scroll.addEventListener('scroll', onDrumScroll, { passive: true });
 }
 
-async function loadReport() {
-  const from = document.getElementById('filter-from').value;
-  const to = document.getElementById('filter-to').value;
-  const loc = document.getElementById('filter-loc').value;
+function buildDrumTrack() {
+  const scroll = document.getElementById('drum-scroll');
+  if (!scroll) return;
 
-  if (!from || !to) { showToast('Please select a date range.', true); return; }
-
-  document.getElementById('report-content').innerHTML = '<div class="empty-state"><div class="icon">⏳</div>Loading data…</div>';
-
-  try {
-    const url = APPS_SCRIPT_URL + '?from=' + from + '&to=' + to + (loc ? '&location=' + encodeURIComponent(loc) : '') + '&t=' + Date.now();
-    const res = await fetch(url);
-    const data = await res.json();
-    allRows = data.rows || [];
-    renderReport(allRows, from, to);
-  } catch (e) {
-    document.getElementById('report-content').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div>Could not load data. Check your Apps Script URL.</div>';
-  }
-}
-
-function renderReport(rows, from, to) {
-  if (!rows.length) {
-    document.getElementById('report-content').innerHTML = '<div class="empty-state"><div class="icon">📭</div>No delays recorded in this period.</div>';
+  if (!drumFiltered.length) {
+    scroll.innerHTML = '<div class="drum-no-results">No physicians found</div>';
+    document.getElementById('surgeon-name').value = '';
+    selectedPhysician = '';
     return;
   }
 
-  const causeCounts = { '1': 0, '2': 0, '3': 0, '4': 0, 'Other': 0 };
-  rows.forEach(r => {
-    const k = r.cause in causeCounts ? r.cause : 'Other';
-    causeCounts[k]++;
+  // Top + bottom pad so first/last item can sit at the centre line
+  // viewport = 120px, centre = 60px, item = 36px → pad = 60 - 18 = 42px
+  const pad = 42;
+  let html = `<div class="drum-pad" style="height:${pad}px"></div>`;
+  drumFiltered.forEach((p, i) => {
+    html += `<div class="drum-item${i === drumSelectedIdx ? ' active' : ''}" data-idx="${i}">${p}</div>`;
   });
-  const total = rows.length;
+  html += `<div class="drum-pad" style="height:${pad}px"></div>`;
+  scroll.innerHTML = html;
 
-  const hpYes = rows.filter(r => r.hp_signed === 'yes').length;
-  const hpNo = rows.filter(r => r.hp_signed === 'no').length;
+  // Scroll silently to selected item
+  scrollToIdx(drumSelectedIdx, false);
+  commitSelection(drumSelectedIdx);
+}
 
-  function parseTimeToMins(val) {
-    if (!val) return null;
-    if (!isNaN(val) && parseFloat(val) > 0 && parseFloat(val) < 1) {
-      return Math.round(parseFloat(val) * 24 * 60);
-    }
-    const parts = val.toString().split(':').map(Number);
-    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
-    return parts[0] * 60 + parts[1];
+function scrollToIdx(idx, smooth) {
+  const scroll = document.getElementById('drum-scroll');
+  if (!scroll) return;
+  const pad = 42;
+  const targetScrollTop = pad + idx * ITEM_H - (60 - ITEM_H / 2);
+  scroll.scrollTo({ top: targetScrollTop, behavior: smooth ? 'smooth' : 'instant' });
+}
+
+function onDrumScroll() {
+  const scroll = document.getElementById('drum-scroll');
+  if (!scroll) return;
+  const pad = 42;
+  // Which item is closest to centre?
+  const centreScroll = scroll.scrollTop + 60 - ITEM_H / 2 - pad;
+  const idx = Math.max(0, Math.min(drumFiltered.length - 1, Math.round(centreScroll / ITEM_H)));
+
+  // Update active highlight immediately for responsiveness
+  if (idx !== drumSelectedIdx) {
+    drumSelectedIdx = idx;
+    scroll.querySelectorAll('.drum-item').forEach(el => {
+      el.classList.toggle('active', parseInt(el.dataset.idx) === idx);
+    });
+    commitSelection(idx);
   }
-  let delayMins = rows.map(r => {
-    const startMins = parseTimeToMins(r.scheduled_start);
-    const endMins = parseTimeToMins(r.timeout_time);
-    if (startMins === null || endMins === null) return null;
-    const diff = endMins - startMins;
-    return diff > 0 ? diff : null;
-  }).filter(v => v !== null);
-  const avgDelay = delayMins.length ? Math.round(delayMins.reduce((a,b) => a+b,0) / delayMins.length) : '—';
 
-  const summaryData = [
-    { key: '1', label: 'Anesthesia Bump', count: causeCounts['1'] },
-    { key: '2', label: 'Nursing Bump', count: causeCounts['2'] },
-    { key: '3', label: 'Unwarranted Staggering — Anesthesia', count: causeCounts['3'] },
-    { key: '4', label: 'Unwarranted Staggering — Nursing', count: causeCounts['4'] },
-    { key: 'Other', label: 'Other', count: causeCounts['Other'] },
-  ].filter(d => d.count > 0);
+  // Snap after scroll settles
+  clearTimeout(drumScrollTimer);
+  drumScrollTimer = setTimeout(() => scrollToIdx(idx, true), 120);
+}
 
-  const html = `
-    <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+function commitSelection(idx) {
+  const name = drumFiltered[idx] || '';
+  document.getElementById('surgeon-name').value = name;
+  selectedPhysician = name;
+}
 
-    <div class="stat-row">
-      <div class="stat-card">
-        <span class="stat-num">${total}</span>
-        <div class="stat-label">Total Delays</div>
+function filterDrum() {
+  // no-op: search bar removed; drum shows full list
+}
+
+// legacy alias
+function renderPhysicianList() {}
+function filterPhysicians() { filterDrum(); }
+
+// ── H&P TOGGLE ──
+function setHP(val) {
+  document.getElementById('hp-timeliness').value = val;
+  document.getElementById('hp-yes').classList.toggle('active', val === 'Yes');
+  document.getElementById('hp-no').classList.toggle('active', val === 'No');
+}
+
+// ── TIME DRUM PICKER ──
+// item height matches .time-drum-item height (22px)
+// viewport height = 44px, centre = 22px, pad = 22 - 11 = 11px
+
+const TD_H = 22;
+const TD_PAD = 11;
+
+const TD_HOURS   = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+const TD_MINUTES = ['00','05','10','15','20','25','30','35','40','45','50','55'];
+const TD_AMPM    = ['AM','PM'];
+
+let tdSelH = 6;   // index into TD_HOURS  (default 7 = "7")
+let tdSelM = 3;   // index into TD_MINUTES (default 3 = "15")
+let tdSelP = 0;   // index into TD_AMPM   (default 0 = "AM")
+
+function initTimeDrum() {
+  buildTD('td-hour',  TD_HOURS,   tdSelH, i => { tdSelH = i; commitTimeDrum(); });
+  buildTD('td-min',   TD_MINUTES, tdSelM, i => { tdSelM = i; commitTimeDrum(); });
+  buildTD('td-ampm',  TD_AMPM,    tdSelP, i => { tdSelP = i; commitTimeDrum(); });
+  commitTimeDrum();
+}
+
+function buildTD(id, items, selectedIdx, onSelect) {
+  const scroll = document.getElementById(id);
+  if (!scroll) return;
+
+  let html = `<div style="height:${TD_PAD}px;flex-shrink:0"></div>`;
+  items.forEach((val, i) => {
+    html += `<div class="time-drum-item${i === selectedIdx ? ' active' : ''}" data-idx="${i}">${val}</div>`;
+  });
+  html += `<div style="height:${TD_PAD}px;flex-shrink:0"></div>`;
+  scroll.innerHTML = html;
+
+  // Scroll to selected
+  scroll.scrollTop = selectedIdx * TD_H;
+
+  // Snap on scroll
+  let snapTimer = null;
+  scroll.addEventListener('scroll', () => {
+    const idx = Math.max(0, Math.min(items.length - 1, Math.round(scroll.scrollTop / TD_H)));
+    // Update active highlight immediately
+    scroll.querySelectorAll('.time-drum-item').forEach(el => {
+      el.classList.toggle('active', parseInt(el.dataset.idx) === idx);
+    });
+    onSelect(idx);
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(() => {
+      scroll.scrollTo({ top: idx * TD_H, behavior: 'smooth' });
+    }, 120);
+  }, { passive: true });
+}
+
+function commitTimeDrum() {
+  const h = TD_HOURS[tdSelH];
+  const m = TD_MINUTES[tdSelM];
+  const p = TD_AMPM[tdSelP];
+  document.getElementById('timeout-time').value = `${h}:${m} ${p}`;
+}
+
+function resetTimeDrum() {
+  tdSelH = 6; tdSelM = 3; tdSelP = 0;
+  buildTD('td-hour',  TD_HOURS,   tdSelH, i => { tdSelH = i; commitTimeDrum(); });
+  buildTD('td-min',   TD_MINUTES, tdSelM, i => { tdSelM = i; commitTimeDrum(); });
+  buildTD('td-ampm',  TD_AMPM,    tdSelP, i => { tdSelP = i; commitTimeDrum(); });
+  commitTimeDrum();
+}
+function buildCauseList() {
+  document.getElementById('cause-list').innerHTML = CAUSES.map(c => `
+    <div class="cause-card" id="cause-card-${c.id}" onclick="selectCause('${c.id}')">
+      <div class="cause-radio"><div class="cause-radio-dot"></div></div>
+      <div class="cause-content">
+        <div class="cause-name">${c.name}</div>
+        <div class="cause-desc">${c.desc}</div>
+        <div class="cause-comment">
+          <div class="cause-comment-label">Comment</div>
+          <textarea id="comment-${c.id}" placeholder="Optional comment…" onclick="event.stopPropagation()"></textarea>
+        </div>
       </div>
-      <div class="stat-card">
-        <span class="stat-num">${avgDelay === '—' ? '—' : avgDelay + 'm'}</span>
-        <div class="stat-label">Avg Delay</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-num">${hpYes}</span>
-        <div class="stat-label">H&amp;P Timely</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-num">${hpNo}</span>
-        <div class="stat-label">H&amp;P Late</div>
-      </div>
-    </div>
+    </div>`).join('');
+}
 
-    <div class="chart-wrap">
-      <h3>Delay Causes</h3>
-      <canvas id="pie-chart" height="240"></canvas>
-    </div>
-
-    <div class="table-wrap">
-      <div class="table-title">Summary by Cause</div>
-      <table>
-        <thead>
-          <tr><th>Cause</th><th>Count</th><th>Distribution</th></tr>
-        </thead>
-        <tbody>
-          ${summaryData.map((d, i) => `
-            <tr>
-              <td>${d.label}</td>
-              <td><span style="font-family:var(--mono);font-weight:500;">${d.count}</span></td>
-              <td>
-                <div class="pct-bar">
-                  <div class="bar-track">
-                    <div class="bar-fill" style="width:${Math.round(d.count/total*100)}%;background:${CAUSE_COLORS[i]};"></div>
-                  </div>
-                  <span class="pct-num">${Math.round(d.count/total*100)}%</span>
-                </div>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="table-wrap">
-      <div class="table-title">Individual Cases</div>
-      <div class="detail-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Surgeon</th>
-              <th>MRN</th>
-              <th>Location</th>
-              <th>Sched</th>
-              <th>Time-out</th>
-              <th>Cause</th>
-              <th>H&amp;P</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(r => `
-              <tr>
-                <td style="font-family:var(--mono);font-size:12px;">${r.date || ''}</td>
-                <td>${r.surgeon || ''}</td>
-                <td style="font-family:var(--mono);font-size:12px;">${r.mrn || ''}</td>
-                <td style="font-size:12px;">${r.location || ''}</td>
-                <td style="font-family:var(--mono);font-size:12px;">${r.scheduled_start || ''}</td>
-                <td style="font-family:var(--mono);font-size:12px;">${r.timeout_time || ''}</td>
-                <td style="font-size:12px;">${r.cause === 'Other' ? (r.other_cause || 'Other') : (CAUSE_LABELS[r.cause] || r.cause)}</td>
-                <td style="font-size:12px;color:${r.hp_signed==='yes'?'var(--success)':r.hp_signed==='no'?'var(--danger)':'var(--text-muted)'}">
-                  ${r.hp_signed === 'yes' ? '✓ Yes' : r.hp_signed === 'no' ? '✗ No' : '—'}
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('report-content').innerHTML = html;
-
-  if (pieChart) { pieChart.destroy(); }
-  const ctx = document.getElementById('pie-chart').getContext('2d');
-  pieChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: summaryData.map(d => d.label),
-      datasets: [{
-        data: summaryData.map(d => d.count),
-        backgroundColor: CAUSE_COLORS.slice(0, summaryData.length),
-        borderWidth: 2,
-        borderColor: '#181c27'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#7a8299',
-            font: { size: 11, family: 'DM Sans' },
-            boxWidth: 12, padding: 12
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw/total*100)}%)`
-          }
-        }
-      },
-      cutout: '60%'
-    }
+function selectCause(id) {
+  selectedCauseId = id;
+  const cause = CAUSES.find(c => c.id === id);
+  document.getElementById('delay-cause').value = cause ? cause.name : '';
+  document.querySelectorAll('.cause-card').forEach(card => {
+    card.classList.toggle('selected', card.id === 'cause-card-'+id);
   });
 }
 
-function exportCSV() {
-  if (!allRows.length) return;
-  const headers = ['Date','Surgeon','MRN','Location','Scheduled Start','Time-Out','Cause','Other Cause','H&P Signed','Submitted At'];
-  const rows = allRows.map(r => [
-    r.date, r.surgeon, r.mrn, r.location, r.scheduled_start, r.timeout_time,
-    CAUSE_LABELS[r.cause] || r.cause, r.other_cause || '', r.hp_signed, r.submitted_at
-  ].map(v => '"' + (v||'').replace(/"/g,'""') + '"').join(','));
-  const csv = [headers.join(','), ...rows].join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'cs_delays_' + new Date().toISOString().split('T')[0] + '.csv';
-  a.click();
+// ── SUBMIT ──
+function submitForm() {
+  const surgeon = document.getElementById('surgeon-name').value.trim();
+  const location = document.getElementById('location').value;
+  const date = document.getElementById('case-date').value;
+  const mrn = document.getElementById('mrn').value.trim();
+  const scheduledTime = document.getElementById('scheduled-time').value;
+  const timeoutTime = document.getElementById('timeout-time').value;
+  const cause = document.getElementById('delay-cause').value;
+  const hp = document.getElementById('hp-timeliness').value;
+
+  if (!surgeon)       { showToast('Please select a surgeon', true); return; }
+  if (!location)      { showToast('Please select a location', true); return; }
+  if (!mrn)           { showToast('Please enter the MRN', true); return; }
+  if (!scheduledTime) { showToast('Please select a scheduled start time', true); return; }
+  if (!timeoutTime)   { showToast('Please enter the first time-out time', true); return; }
+  if (!cause)         { showToast('Please select a cause of delay', true); return; }
+
+  const comment = selectedCauseId
+    ? (document.getElementById('comment-'+selectedCauseId)?.value.trim() || '')
+    : '';
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action:'logDelay', surgeon, location, date, mrn, scheduledTime, timeoutTime, cause, comment, hp })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'success') { showToast('Delay logged ✓'); resetForm(); }
+    else showToast('Error: ' + (data.message || 'Unknown'), true);
+  })
+  .catch(() => showToast('Network error. Try again.', true))
+  .finally(() => { btn.disabled = false; btn.textContent = 'Submit Delay'; });
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function resetForm() {
+  selectedPhysician = '';
+  selectedCauseId = '';
+  document.getElementById('surgeon-name').value = '';
+  document.getElementById('location').value = '';
+  document.getElementById('mrn').value = '';
+  document.getElementById('scheduled-time').innerHTML = '<option value="">Select location first…</option>';
+  document.getElementById('timeout-time').value = '';
+  resetTimeDrum();
+  document.getElementById('delay-cause').value = '';
+  document.getElementById('hp-timeliness').value = '';
+  document.getElementById('hp-yes').classList.remove('active');
+  document.getElementById('hp-no').classList.remove('active');
+  document.querySelectorAll('.cause-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.cause-comment textarea').forEach(t => t.value = '');
+  // reset drum
+  drumFiltered = [...physicians];
+  drumSelectedIdx = 0;
+  buildDrumTrack();
+  setTodayDate();
+}
+
+// ── ROSTER ──
+function renderRoster(query) {
+  const q = (query||'').toLowerCase();
+  const filtered = physicians.filter(p => p.toLowerCase().includes(q));
+  const listEl = document.getElementById('roster-physician-list');
+  listEl.innerHTML = filtered.length
+    ? filtered.map(p => `
+        <div class="roster-item">
+          <span class="roster-item-name">${p}</span>
+          <button class="roster-delete" onclick="removePhysician(${JSON.stringify(p)})">×</button>
+        </div>`).join('')
+    : '<div style="padding:20px;text-align:center;color:var(--gray);font-size:13px">No physicians found</div>';
+  document.getElementById('roster-count').textContent =
+    `${physicians.length} physician${physicians.length !== 1 ? 's' : ''} on roster`;
+}
+
+function addPhysician() {
+  const input = document.getElementById('new-physician');
+  const name = input.value.trim();
+  if (!name) return;
+  if (physicians.some(p => p.toLowerCase() === name.toLowerCase())) {
+    showToast('Already on roster', true); return;
+  }
+  physicians.push(name);
+  physicians.sort((a,b) => a.localeCompare(b));
+  input.value = '';
+  renderRoster('');
+  // refresh drum
+  drumFiltered = [...physicians];
+  drumSelectedIdx = 0;
+  buildDrumTrack();
+  syncRosterToSheet();
+  showToast(`${name} added`);
+}
+
+function removePhysician(name) {
+  if (!confirm(`Remove ${name} from the roster?`)) return;
+  physicians = physicians.filter(p => p !== name);
+  renderRoster('');
+  // refresh drum
+  drumFiltered = [...physicians];
+  drumSelectedIdx = 0;
+  buildDrumTrack();
+  syncRosterToSheet();
+  showToast(`${name} removed`);
+}
+
+function syncRosterToSheet() {
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateRoster', physicians })
+  }).catch(() => {});
+}
+
+// ── REPORT ──
+function loadPhysiciansFromSheet() {
+  fetch(SCRIPT_URL + '?action=getRoster&t=' + Date.now())
+    .then(r => r.json())
+    .then(data => {
+      if (data.physicians && data.physicians.length > 0) {
+        physicians = data.physicians.sort((a,b) => a.localeCompare(b));
+        drumFiltered = [...physicians];
+        drumSelectedIdx = 0;
+        buildDrumTrack();
+      }
+    }).catch(() => {});
+}
+
+function loadReport() {
+  document.getElementById('report-content').innerHTML =
+    '<div class="report-loading"><div class="spinner"></div>Loading report…</div>';
+  fetch(SCRIPT_URL + '?action=getReport&t=' + Date.now())
+    .then(r => r.json())
+    .then(data => renderReport(data))
+    .catch(() => {
+      document.getElementById('report-content').innerHTML =
+        '<div class="report-empty">Failed to load report. Please try again.</div>';
+    });
+}
+
+function renderReport(data) {
+  const rows = data.rows || [];
+  if (!rows.length) {
+    document.getElementById('report-content').innerHTML =
+      '<div class="report-empty">No delays have been logged yet.</div>';
+    return;
+  }
+
+  const total = rows.length;
+  const delays = rows.map(r => calcDelay(r[4], r[5])).filter(d => d !== null);
+  const avgDelay = delays.length ? Math.round(delays.reduce((a,b)=>a+b,0)/delays.length) : null;
+
+  const causeCounts = {};
+  CAUSES.forEach(c => { causeCounts[c.name] = 0; });
+  rows.forEach(r => {
+    const k = r[6];
+    if (k) causeCounts[k] = (causeCounts[k] || 0) + 1;
+  });
+  const maxCount = Math.max(...Object.values(causeCounts), 1);
+
+  const breakdownHtml = Object.entries(causeCounts)
+    .filter(([,v]) => v > 0)
+    .sort((a,b) => b[1]-a[1])
+    .map(([name,count]) => `
+      <div class="breakdown-row">
+        <div class="breakdown-label">${name}</div>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
+        <div class="breakdown-count">${count}</div>
+      </div>`).join('');
+
+  const rowsHtml = rows.map(r => {
+    const delay = calcDelay(r[4], r[5]);
+    return `<tr>
+      <td>${r[2]||''}</td>
+      <td>${r[0]||''}</td>
+      <td>${r[1]||''}</td>
+      <td>${r[3]||''}</td>
+      <td>${r[4]||''}</td>
+      <td>${r[5]||''}</td>
+      <td><span class="delay-min">${delay !== null ? delay : '—'}</span></td>
+      <td><span class="badge">${r[6]||''}</span></td>
+      <td class="comment-cell">${r[7]||''}</td>
+      <td>${r[8]||''}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('report-content').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Delays</div>
+        <div class="stat-value">${total}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Delay</div>
+        <div class="stat-value">${avgDelay !== null ? avgDelay+'m' : '—'}</div>
+        <div class="stat-sub">minutes</div>
+      </div>
+    </div>
+
+    <div class="section-title">Delay Cause Breakdown</div>
+    <div class="breakdown">${breakdownHtml || '<div style="color:var(--gray);font-size:13px">No data</div>'}</div>
+
+    <div class="section-title">All Entries</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Surgeon</th><th>Location</th><th>MRN</th>
+            <th>Sched. Start</th><th>Time-Out</th><th>Delay (min)</th>
+            <th>Cause</th><th>Comment</th><th>H&amp;P</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+function calcDelay(scheduled, timeout) {
+  if (!scheduled || !timeout) return null;
+  const toMin = t => {
+    const s = String(t).trim();
+    const ampm = s.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (ampm) {
+      let h = parseInt(ampm[1]);
+      const m = parseInt(ampm[2]);
+      if (ampm[3].toUpperCase()==='PM' && h!==12) h+=12;
+      if (ampm[3].toUpperCase()==='AM' && h===12) h=0;
+      return h*60+m;
+    }
+    const plain = s.match(/(\d+):(\d+)/);
+    if (plain) return parseInt(plain[1])*60+parseInt(plain[2]);
+    return null;
+  };
+  const s = toMin(scheduled), to = toMin(timeout);
+  if (s === null || to === null) return null;
+  return to - s;
+}
+
+// ── TOAST ──
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
 </body>
