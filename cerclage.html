@@ -1328,13 +1328,11 @@ function submitForm() {
 
   fetch(SCRIPT_URL, {
     method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action:'logCerclage', surgeon, location, date, mrn, scheduledTime, timeoutTime, cause, comment, hp })
   })
-  .then(r => r.json())
-  .then(data => {
-    if (data.status === 'success') { showToast('Delay logged ✓'); resetForm(); }
-    else showToast('Error: ' + (data.message || 'Unknown'), true);
-  })
+  .then(() => { showToast('Delay logged ✓'); resetForm(); })
   .catch(() => showToast('Network error. Try again.', true))
   .finally(() => { btn.disabled = false; btn.textContent = 'Submit Delay'; });
 }
@@ -1421,6 +1419,8 @@ function removePhysician(name) {
 function syncRosterToSheet() {
   fetch(SCRIPT_URL, {
     method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'updateRoster', physicians })
   }).catch(() => {});
 }
