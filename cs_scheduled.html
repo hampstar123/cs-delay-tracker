@@ -1511,7 +1511,7 @@ function localDateStr(d) {
     String(d.getDate()).padStart(2,'0');
 }
 
-const CAUSE_COLORS = ['#7c5cfc','#4f8ef7','#a58cf8','#7aabfa','#7a8299'];
+const CAUSE_COLORS = ['#4f8ef7','#7c5cfc','#3ecf8e','#f5a623','#e85d75','#38bdf8','#a58cf8'];
 let pieChart = null;
 let allRows  = [];
 
@@ -1639,8 +1639,7 @@ function renderReport(rows) {
       datasets: [{
         data: summaryData.map(d => d.count),
         backgroundColor: summaryData.map(d => d.color),
-        borderWidth: 2,
-        borderColor: '#181c27'
+        borderWidth: 0
       }]
     },
     options: {
