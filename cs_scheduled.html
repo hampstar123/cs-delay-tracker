@@ -49,30 +49,43 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
+    padding: 10px 14px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     position: sticky; top: 0; z-index: 100;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
   .nav-title {
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--accent);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .nav-btns { display: flex; gap: 6px; }
+  .nav-btns {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
   .nav-btn {
     background: none;
     border: 1px solid transparent;
     color: var(--text-muted);
     font-family: var(--sans);
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
-    padding: 6px 14px;
+    padding: 6px 10px;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s;
+    white-space: nowrap;
+    text-align: center;
   }
   .nav-btn.active {
     background: var(--surface2);
@@ -792,9 +805,9 @@
 
 <!-- NAV -->
 <nav class="nav">
-  <span class="nav-title">C/S Delay Tracker — Scheduled</span>
+  <span class="nav-title">C/S · Scheduled</span>
   <div class="nav-btns">
-    <button class="nav-btn active" onclick="showView('log')">Log Delay</button>
+    <button class="nav-btn active" onclick="showView('log')">Log</button>
     <a class="nav-btn" href="report_index.html" style="text-decoration:none">Report</a>
     <button class="nav-btn" onclick="openRoster()">Roster</button>
   </div>
