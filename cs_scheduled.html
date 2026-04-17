@@ -1031,6 +1031,12 @@ let reportUnlocked = false;
 let rosterUnlocked = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Auto-open report if coming from report index
+  if (window.location.hash === '#report' && sessionStorage.getItem('reportUnlocked') === '1') {
+    reportUnlocked = true;
+    showView('report');
+    setDefaultDates();
+  }
   setTodayDate();
   buildCauseList();
   initDrum();
