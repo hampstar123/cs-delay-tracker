@@ -14,8 +14,11 @@
     --accent: #4f8ef7;
     --accent2: #7c5cfc;
     --success: #3ecf8e;
+    --warn: #f5a623;
+    --danger: #e85d75;
     --text: #e8ecf4;
     --text-muted: #7a8299;
+    --text-dim: #4a5168;
     --mono: 'DM Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
@@ -48,131 +51,107 @@
   /* MAIN */
   .main {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    max-width: 680px;
+    margin: 0 auto;
+    width: 100%;
     padding: 40px 20px 60px;
   }
 
-  .hero-label {
+  .page-label {
     font-family: var(--mono);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--text-muted);
-    margin-bottom: 10px;
-    text-align: center;
+    margin-bottom: 8px;
   }
-  .hero-title {
-    font-size: 24px;
+  .page-title {
+    font-size: 22px;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 8px;
-    text-align: center;
+    margin-bottom: 4px;
   }
-  .hero-sub {
+  .page-sub {
     font-size: 13px;
     color: var(--text-muted);
-    margin-bottom: 48px;
-    text-align: center;
+    margin-bottom: 36px;
   }
 
-  /* CARDS */
+  /* Cards — same template as report_index */
   .cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-    max-width: 680px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 22px 14px;
-    cursor: pointer;
+    border-radius: 12px;
+    padding: 22px 24px;
     text-decoration: none;
     color: var(--text);
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     transition: border-color 0.18s, background 0.18s, transform 0.12s;
     position: relative;
     overflow: hidden;
   }
-  .card:hover {
-    border-color: var(--accent);
-    background: var(--surface2);
-    transform: translateY(-2px);
-  }
-  .card:active { transform: translateY(0); }
-
-  .card-scheduled:hover { border-color: var(--accent); }
-  .card-unscheduled:hover { border-color: var(--accent2); }
-  .card-cerclage:hover { border-color: var(--success); }
-
-  /* subtle top accent stripe */
   .card::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: 14px 14px 0 0;
-    opacity: 0;
-    transition: opacity 0.18s;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 12px 0 0 12px;
   }
-  .card:hover::before { opacity: 1; }
-  .card-scheduled::before { background: var(--accent); }
-  .card-unscheduled::before { background: var(--accent2); }
-  .card-cerclage::before { background: var(--success); }
+  .card:hover {
+    background: var(--surface2);
+    transform: translateX(3px);
+  }
 
+  .card-scheduled::before   { background: var(--accent); }
+  .card-unscheduled::before { background: var(--accent2); }
+  .card-cerclage::before    { background: var(--success); }
+  .card-reports::before     { background: var(--warn); }
+
+  .card-scheduled:hover   { border-color: var(--accent); }
+  .card-unscheduled:hover { border-color: var(--accent2); }
+  .card-cerclage:hover    { border-color: var(--success); }
+  .card-reports:hover     { border-color: var(--warn); }
+
+  .card-body { flex: 1; }
   .card-title {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
+    margin-bottom: 3px;
     color: var(--text);
-    line-height: 1.3;
   }
-  .card-desc {
+  .card-sub {
     font-size: 12px;
     color: var(--text-muted);
-    line-height: 1.5;
   }
   .card-arrow {
-    margin-top: auto;
     font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    transition: color 0.15s, gap 0.15s;
+    font-size: 18px;
+    color: var(--text-dim);
+    transition: color 0.15s;
+    flex-shrink: 0;
   }
-  .card:hover .card-arrow { gap: 8px; }
-  .card-scheduled:hover .card-arrow { color: var(--accent); }
+  .card-scheduled:hover   .card-arrow { color: var(--accent); }
   .card-unscheduled:hover .card-arrow { color: var(--accent2); }
-  .card-cerclage:hover .card-arrow { color: var(--success); }
+  .card-cerclage:hover    .card-arrow { color: var(--success); }
+  .card-reports:hover     .card-arrow { color: var(--warn); }
+
+  .card-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
 
   @media (max-width: 480px) {
-    .card { padding: 16px 10px; gap: 8px; border-radius: 10px; }
-    .card-title { font-size: 11px; }
-    .card-arrow { font-size: 10px; }
-    .cards { gap: 8px; }
-  }
-
-  @media (max-width: 320px) {
-    .cards { grid-template-columns: 1fr; }
-  }
-
-  .footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 12px;
-    color: var(--text-muted);
-    font-family: var(--mono);
-    letter-spacing: 0.04em;
+    .card { padding: 18px; }
   }
 </style>
 </head>
@@ -183,29 +162,48 @@
 </nav>
 
 <main class="main">
-  <div class="hero-label">OR Delay Reporting</div>
-  <div class="hero-title">Log an OR Delay</div>
-  <div class="hero-sub">Select the case type to open the correct form</div>
+  <div class="page-label">OR Delay Reporting</div>
+  <div class="page-title">Log an OR Delay</div>
+  <div class="page-sub">Select the case type to open the correct form</div>
 
   <div class="cards">
+
     <a class="card card-scheduled" href="cs_scheduled.html">
-      <div class="card-title">Scheduled C-Section</div>
-      <div class="card-arrow">Log delay <span>→</span></div>
+      <div class="card-body">
+        <div class="card-title">Scheduled C-Section</div>
+        <div class="card-sub">Elective case with a designated start time</div>
+      </div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card card-unscheduled" href="cs_unscheduled.html">
-      <div class="card-title">Unscheduled C-Section</div>
-      <div class="card-arrow">Log delay <span>→</span></div>
+      <div class="card-body">
+        <div class="card-title">Unscheduled C-Section</div>
+        <div class="card-sub">Urgent or emergent case not on the schedule</div>
+      </div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card card-cerclage" href="cerclage.html">
-      <div class="card-title">Cerclage</div>
-      <div class="card-arrow">Log delay <span>→</span></div>
+      <div class="card-body">
+        <div class="card-title">Cerclage</div>
+        <div class="card-sub">Cervical cerclage procedure delayed in the OR</div>
+      </div>
+      <div class="card-arrow">→</div>
     </a>
+
+    <div class="card-divider"></div>
+
+    <a class="card card-reports" href="report_index.html">
+      <div class="card-body">
+        <div class="card-title">View Reports</div>
+        <div class="card-sub">Access delay data and analytics</div>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
   </div>
 </main>
-
-<div class="footer"></div>
 
 </body>
 </html>
