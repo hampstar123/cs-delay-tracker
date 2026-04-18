@@ -357,7 +357,7 @@
   .cause-card.selected { border-color: var(--accent); background: rgba(79,142,247,0.08); }
   .cause-radio {
     width: 18px; height: 18px;
-    border-radius: 50%;
+    border-radius: 4px;
     border: 2px solid var(--text-dim);
     flex-shrink: 0;
     margin-top: 2px;
@@ -366,8 +366,8 @@
   }
   .cause-card.selected .cause-radio { border-color: var(--accent); background: var(--accent); }
   .cause-radio-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
+    width: 11px; height: 6px;
+    border-radius: 1px;
     background: white;
     opacity: 0;
     transition: opacity 0.15s;
@@ -873,6 +873,11 @@
       <input type="hidden" id="delay-cause">
     </div>
 
+    <div class="field" style="margin-top:4px;">
+      <label>Comment <span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:var(--text-muted)">(Optional)</span></label>
+      <textarea id="shared-comment" placeholder="Add any additional notes…" style="min-height:72px"></textarea>
+    </div>
+
     <div class="section-label">Documentation <span style="font-weight:400;font-size:11px;text-transform:none;letter-spacing:0;color:var(--text-muted)">(Optional)</span></div>
     <div style="font-size:13px;color:var(--text-muted);margin-top:-10px;margin-bottom:14px;">Has the urgency and desired start time been documented?</div>
 
@@ -1036,7 +1041,6 @@ const TIME_OPTIONS = {
 
 let physicians = [...DEFAULT_PHYSICIANS];
 let selectedPhysician = '';
-let selectedCauseId = '';
 let pendingView = '';
 let reportUnlocked = false;
 let rosterUnlocked = false;
@@ -1297,26 +1301,24 @@ function resetTimeDrum() {
 }
 function buildCauseList() {
   document.getElementById('cause-list').innerHTML = CAUSES.map(c => `
-    <div class="cause-card" id="cause-card-${c.id}" onclick="selectCause('${c.id}')">
+    <div class="cause-card" id="cause-card-${c.id}" onclick="toggleCause('${c.id}')">
       <div class="cause-radio"><div class="cause-radio-dot"></div></div>
       <div class="cause-content">
         <div class="cause-name">${c.name}</div>
         <div class="cause-desc">${c.desc}</div>
-        <div class="cause-comment">
-          <div class="cause-comment-label">Comment</div>
-          <textarea id="comment-${c.id}" placeholder="Optional comment…" onclick="event.stopPropagation()"></textarea>
-        </div>
       </div>
     </div>`).join('');
 }
 
-function selectCause(id) {
-  selectedCauseId = id;
-  const cause = CAUSES.find(c => c.id === id);
-  document.getElementById('delay-cause').value = cause ? cause.name : '';
-  document.querySelectorAll('.cause-card').forEach(card => {
-    card.classList.toggle('selected', card.id === 'cause-card-'+id);
-  });
+function toggleCause(id) {
+  const card = document.getElementById('cause-card-'+id);
+  if (!card) return;
+  card.classList.toggle('selected');
+  // Keep delay-cause hidden field updated with comma-separated selected names
+  const selected = CAUSES
+    .filter(c => document.getElementById('cause-card-'+c.id)?.classList.contains('selected'))
+    .map(c => c.name);
+  document.getElementById('delay-cause').value = selected.join(', ');
 }
 
 // ── SUBMIT ──
@@ -1335,11 +1337,9 @@ function submitForm() {
   if (!mrn)           { showToast('Please enter the MRN', true); return; }
   if (!scheduledTime) { showToast('Please select a scheduled start time', true); return; }
   if (!timeoutTime)   { showToast('Please enter the first time-out time', true); return; }
-  if (!cause)         { showToast('Please select a cause of delay', true); return; }
+  if (!cause)         { showToast('Please select at least one cause of delay', true); return; }
 
-  const comment = selectedCauseId
-    ? (document.getElementById('comment-'+selectedCauseId)?.value.trim() || '')
-    : '';
+  const comment = (document.getElementById('shared-comment')?.value.trim() || '');
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
@@ -1366,7 +1366,6 @@ function formatTime(t) {
 
 function resetForm() {
   selectedPhysician = '';
-  selectedCauseId = '';
   document.getElementById('surgeon-name').value = '';
   const ps = document.getElementById('physician-search');
   if (ps) ps.value = '';
@@ -1376,11 +1375,11 @@ function resetForm() {
   document.getElementById('timeout-time').value = '';
   resetTimeDrum();
   document.getElementById('delay-cause').value = '';
+  document.getElementById('shared-comment').value = '';
   document.getElementById('hp-timeliness').value = '';
   document.getElementById('hp-yes').classList.remove('active');
   document.getElementById('hp-no').classList.remove('active');
   document.querySelectorAll('.cause-card').forEach(c => c.classList.remove('selected'));
-  document.querySelectorAll('.cause-comment textarea').forEach(t => t.value = '');
   // reset drum
   drumFiltered = [...physicians];
   drumSelectedIdx = 0;
@@ -1517,13 +1516,16 @@ function renderReport(rows) {
 
   const total = rows.length;
 
-  // Cause counts — r[6] is cause name
+  // Cause counts — r[6] may be comma-separated (multi-select)
   const causeNames = CAUSES.map(c => c.name);
   const causeCounts = {};
   causeNames.forEach(n => { causeCounts[n] = 0; });
   rows.forEach(r => {
-    const k = r[6];
-    if (k) causeCounts[k] = (causeCounts[k] || 0) + 1;
+    const causes = (r[6] || '').split(',').map(s => s.trim()).filter(Boolean);
+    causes.forEach(k => {
+      if (causeCounts.hasOwnProperty(k)) causeCounts[k]++;
+      else causeCounts[k] = (causeCounts[k] || 0) + 1;
+    });
   });
 
   const summaryData = CAUSES.map((c, i) => ({
@@ -1607,7 +1609,7 @@ function renderReport(rows) {
                 <td style="font-family:var(--mono);font-size:12px">${r[4]||''}</td>
                 <td style="font-family:var(--mono);font-size:12px">${r[5]||''}</td>
                 <td style="font-family:var(--mono)">${delay !== null ? delay+'m' : '—'}</td>
-                <td style="font-size:12px">${r[6]||''}</td>
+                <td style="font-size:11px;line-height:1.4">${(r[6]||'').split(',').map(s=>s.trim()).join('<br>')}</td>
                 <td style="font-size:12px;color:var(--text-muted)">${r[7]||''}</td>
                 <td style="font-size:12px;color:${hp==='yes'?'var(--success)':hp==='no'?'var(--danger)':'var(--text-muted)'}">
                   ${hp==='yes'?'✓ Yes':hp==='no'?'✗ No':'—'}
