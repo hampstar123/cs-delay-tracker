@@ -14,7 +14,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 0 0 48px; }
 .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
-.header-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--warn), #e85d75); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.header-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--warn), var(--danger)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
 .section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
 .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 14px; }
@@ -47,8 +47,9 @@ textarea:focus { border-color: var(--accent); }
 .success-card { display: none; background: var(--surface); border: 1px solid var(--success); border-radius: 14px; padding: 32px 20px; text-align: center; margin-top: 20px; }
 .success-card.show { display: block; }
 .case-number { font-family: 'DM Mono', monospace; font-size: 28px; color: var(--success); font-weight: 500; margin: 12px 0 8px; letter-spacing: .06em; }
-.success-note { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-.another-btn { margin-top: 20px; padding: 11px 28px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; }
+.success-note { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.submit-ms-btn { margin-top: 16px; width: 100%; padding: 13px; border-radius: 10px; border: none; background: #0078d4; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; }
+.another-btn { margin-top: 10px; width: 100%; padding: 11px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -115,13 +116,25 @@ textarea:focus { border-color: var(--accent); }
     <div style="font-size:40px;">✅</div>
     <div style="font-size:18px;font-weight:600;margin-top:12px;">Delay Logged</div>
     <div class="case-number" id="case-number-display">—</div>
-    <div class="success-note">Write down this case number.<br>It links this report to the Epic chart for audit.</div>
+    <div class="success-note">Note this case number for audit.<br><br>Tap the button below to confirm your submission — the form will open pre-filled. Just tap <strong>Submit</strong> on that page.</div>
+    <button class="submit-ms-btn" id="ms-submit-btn">Confirm in Microsoft Forms →</button>
     <button class="another-btn" onclick="resetForm()">Log Another Delay</button>
   </div>
 </div>
 
 <script>
-const FLOW_URL = 'https://default3f8a7bc4e33747a5a0fc0d512c0e05.f1.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2b173e68fe584bb18e05a3af23ea23fe/triggers/manual/paths/invoke?api-version=1';
+const FORM_ID = 'xHuKPzfjpUeg_A1RLA4F8e994R1jAxdLo-PGyHVzFwRUNzEzSTJXMjRNVEZERTVJMVBCN0wyRzZCRS4u';
+const FORM_BASE = 'https://forms.microsoft.com/Pages/ResponsePage.aspx?id=' + FORM_ID;
+const FIELDS = {
+  caseNumber:    'r26672c960d5d472080d07440c2fe5891',
+  location:      'r240d8c5608de4e22b2df5716df4afa16',
+  date:          'rfb893b8fc7bc45e9b5084ce8e8171a02',
+  scheduledTime: 'r055de2ff2a34495b8fafc9358537a88d',
+  timeoutTime:   'r4d2bc24c223e4a6c9498df0554247df6',
+  cause:         'r50293b3fad864d7cbb876c55b6e3191e',
+  comment:       'rcdd63c214e54436f8447e21747a9621f',
+  documentation: 'r3faebf72ab7c4d10a34b3f0dad87b49b'
+};
 
 const CAUSES = [
   { id:'anesthesia_bump', title:'Anesthesia Bump', desc:'' },
@@ -169,7 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
   buildCauses();
 });
 
-async function submitForm() {
+function buildPrefilledUrl(data) {
+  let url = FORM_BASE;
+  for (const [key, fieldId] of Object.entries(FIELDS)) {
+    url += '&' + fieldId + '=' + encodeURIComponent(data[key] || '');
+  }
+  return url;
+}
+
+function submitForm() {
   const location      = document.getElementById('location').value;
   const date          = document.getElementById('date').value;
   const scheduledTime = document.getElementById('scheduled-time').value;
@@ -181,32 +202,19 @@ async function submitForm() {
     return;
   }
 
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true; btn.textContent = 'Submitting…';
-
   const caseNumber = generateCaseNumber();
-
-  const payload = {
-    sheet: 'Unscheduled Delays',
+  const data = {
     caseNumber, location, date, scheduledTime, timeoutTime,
     cause: selectedCauses.join(', '),
-    comment: document.getElementById('comment').value,
+    comment: document.getElementById('comment').value || '',
     documentation: docValue
   };
 
-  try {
-    await fetch(FLOW_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    document.getElementById('case-number-display').textContent = caseNumber;
-    document.getElementById('form-wrapper').style.display = 'none';
-    document.getElementById('success-card').classList.add('show');
-  } catch(e) {
-    btn.disabled = false; btn.textContent = 'Submit Delay Report';
-    alert('Submission error. Please try again.');
-  }
+  const prefilledUrl = buildPrefilledUrl(data);
+  document.getElementById('case-number-display').textContent = caseNumber;
+  document.getElementById('ms-submit-btn').onclick = () => window.open(prefilledUrl, '_blank');
+  document.getElementById('form-wrapper').style.display = 'none';
+  document.getElementById('success-card').classList.add('show');
 }
 
 function resetForm() {
@@ -220,8 +228,6 @@ function resetForm() {
   document.getElementById('doc-yes').className = 'toggle-btn';
   document.getElementById('doc-no').className  = 'toggle-btn';
   document.querySelectorAll('.cause-card').forEach(c=>c.classList.remove('selected'));
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = false; btn.textContent = 'Submit Delay Report';
 }
 </script>
 </body>
