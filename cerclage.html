@@ -121,7 +121,7 @@ textarea:focus { border-color: var(--accent); }
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
+const FLOW_URL = 'https://default3f8a7bc4e33747a5a0fc0d512c0e05.f1.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2957bb4fdcb84ea7b1494eec0d072653/triggers/manual/paths/invoke?api-version=1';
 
 const CAUSES = [
   { id:'anesthesia_bump', title:'Anesthesia Bump', desc:'' },
@@ -134,6 +134,13 @@ const CAUSES = [
 ];
 
 let docValue = null;
+
+function generateCaseNumber() {
+  const stored = localStorage.getItem('ld_case_counter');
+  const next = stored ? parseInt(stored) + 1 : 1;
+  localStorage.setItem('ld_case_counter', next);
+  return 'DT-' + String(next).padStart(5, '0');
+}
 
 function buildCauses() {
   document.getElementById('causes-grid').innerHTML = CAUSES.map(c => `
@@ -148,9 +155,7 @@ function buildCauses() {
     </div>`).join('');
 }
 
-function toggleCause(id) {
-  document.getElementById('cause-'+id).classList.toggle('selected');
-}
+function toggleCause(id) { document.getElementById('cause-'+id).classList.toggle('selected'); }
 
 function setDoc(val) {
   docValue = val;
@@ -179,14 +184,23 @@ async function submitForm() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = 'Submitting…';
 
-  const payload = { action:'submit', sheet:'Cerclage Delays', location, date, scheduledTime, timeoutTime, cause: selectedCauses.join(', '), comment: document.getElementById('comment').value, documentation: docValue };
+  const caseNumber = generateCaseNumber();
+
+  const payload = {
+    sheet: 'Cerclage Delays',
+    caseNumber, location, date, scheduledTime, timeoutTime,
+    cause: selectedCauses.join(', '),
+    comment: document.getElementById('comment').value,
+    documentation: docValue
+  };
 
   try {
-    await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    const r = await fetch(`${SCRIPT_URL}?action=lastCase&sheet=Cerclage+Delays&_=${Date.now()}`);
-    let cn = '';
-    try { const j = await r.json(); cn = j.caseNumber || ''; } catch(e){}
-    document.getElementById('case-number-display').textContent = cn || '(see sheet)';
+    await fetch(FLOW_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    document.getElementById('case-number-display').textContent = caseNumber;
     document.getElementById('form-wrapper').style.display = 'none';
     document.getElementById('success-card').classList.add('show');
   } catch(e) {

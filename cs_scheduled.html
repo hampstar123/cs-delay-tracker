@@ -123,7 +123,7 @@ textarea:focus { border-color: var(--accent); }
 </div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
+const FLOW_URL = 'https://default3f8a7bc4e33747a5a0fc0d512c0e05.f1.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/07760659fc4e4615b709bbcdfe7583dc/triggers/manual/paths/invoke?api-version=1';
 
 const CAUSES = [
   { id:'anesthesia_bump', title:'Anesthesia Bump', desc:'' },
@@ -142,6 +142,14 @@ const TIMES = {
 
 let docValue = null;
 
+// Generate a case number using timestamp + random suffix
+function generateCaseNumber() {
+  const stored = localStorage.getItem('ld_case_counter');
+  const next = stored ? parseInt(stored) + 1 : 1;
+  localStorage.setItem('ld_case_counter', next);
+  return 'DT-' + String(next).padStart(5, '0');
+}
+
 function buildCauses() {
   document.getElementById('causes-grid').innerHTML = CAUSES.map(c => `
     <div class="cause-card" id="cause-${c.id}" onclick="toggleCause('${c.id}')">
@@ -155,9 +163,7 @@ function buildCauses() {
     </div>`).join('');
 }
 
-function toggleCause(id) {
-  document.getElementById('cause-'+id).classList.toggle('selected');
-}
+function toggleCause(id) { document.getElementById('cause-'+id).classList.toggle('selected'); }
 
 function updateScheduledTimes() {
   const loc = document.getElementById('location').value;
@@ -179,10 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function submitForm() {
-  const location     = document.getElementById('location').value;
-  const date         = document.getElementById('date').value;
-  const scheduledTime= document.getElementById('scheduled-time').value;
-  const timeoutTime  = document.getElementById('timeout-time').value;
+  const location      = document.getElementById('location').value;
+  const date          = document.getElementById('date').value;
+  const scheduledTime = document.getElementById('scheduled-time').value;
+  const timeoutTime   = document.getElementById('timeout-time').value;
   const selectedCauses = CAUSES.filter(c => document.getElementById('cause-'+c.id).classList.contains('selected')).map(c=>c.title);
 
   if (!location || !date || !scheduledTime || !timeoutTime || !selectedCauses.length || !docValue) {
@@ -193,15 +199,23 @@ async function submitForm() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = 'Submitting…';
 
-  const payload = { action:'submit', sheet:'Scheduled Delays', location, date, scheduledTime, timeoutTime, cause: selectedCauses.join(', '), comment: document.getElementById('comment').value, documentation: docValue };
+  const caseNumber = generateCaseNumber();
+
+  const payload = {
+    sheet: 'Scheduled Delays',
+    caseNumber, location, date, scheduledTime, timeoutTime,
+    cause: selectedCauses.join(', '),
+    comment: document.getElementById('comment').value,
+    documentation: docValue
+  };
 
   try {
-    await fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    // Fetch the case number just assigned
-    const r = await fetch(`${SCRIPT_URL}?action=lastCase&sheet=Scheduled+Delays&_=${Date.now()}`);
-    let cn = '';
-    try { const j = await r.json(); cn = j.caseNumber || ''; } catch(e){}
-    document.getElementById('case-number-display').textContent = cn || '(see sheet)';
+    await fetch(FLOW_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    document.getElementById('case-number-display').textContent = caseNumber;
     document.getElementById('form-wrapper').style.display = 'none';
     document.getElementById('success-card').classList.add('show');
   } catch(e) {
