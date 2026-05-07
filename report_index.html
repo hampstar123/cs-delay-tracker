@@ -17,7 +17,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
 .header-left { display: flex; align-items: center; gap: 12px; }
 .header-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-.container { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+.container { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
 
 /* Login */
 #login-screen { display: flex; align-items: center; justify-content: center; min-height: 70vh; }
@@ -29,7 +29,13 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .login-btn { width: 100%; padding: 13px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; }
 .error-msg { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
 
-/* Dashboard */
+/* Instructions */
+#instructions { display: none; background: var(--surface); border: 1px solid var(--warn); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+#instructions h3 { font-size: 15px; color: var(--warn); margin-bottom: 10px; }
+#instructions p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 8px; }
+#instructions ol { font-size: 13px; color: var(--text-muted); line-height: 1.8; padding-left: 20px; }
+
+/* Data entry area */
 #dashboard { display: none; }
 .tabs { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
 .tab { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
@@ -43,7 +49,6 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
 .chart-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
 .chart-wrap { position: relative; height: 220px; }
-/* Table */
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 22px; }
 .table-header { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; display: flex; align-items: center; justify-content: space-between; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -53,10 +58,212 @@ tr:last-child td { border-bottom: none; }
 tr:hover td { background: var(--surface2); }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; }
 .badge-loc { background: rgba(79,142,247,.15); color: var(--accent); }
-.case-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); }
 .no-data { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+
+/* Paste area */
+.paste-section { margin-bottom: 22px; }
+.paste-section h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.paste-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+.paste-label { font-size: 13px; color: var(--text-muted); min-width: 160px; padding-top: 8px; }
+textarea.paste-box { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; padding: 8px 12px; height: 80px; outline: none; resize: vertical; }
+textarea.paste-box:focus { border-color: var(--accent); }
+.parse-btn { padding: 11px 24px; border-radius: 9px; border: none; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
 .refresh-btn { padding: 7px 16px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; }
 </style>
+
+<script>
+var ADMIN_PW = '123456';
+var COLORS = ['#4f8ef7','#7c5cfc','#3ecf8e','#f5a623','#e85d75','#38bdf8','#a58cf8'];
+var allData = { scheduled: [], unscheduled: [], cerclage: [] };
+var currentTab = 'all';
+var charts = {};
+
+// Field order from Microsoft Forms Excel export:
+// MRN, Location, Date, Scheduled Time, Time-Out, Cause, Comment, Documentation
+// Plus MS Forms adds: ID, Start time, Completion time, Email, Name at the start
+// We'll handle both raw paste (TSV from Excel) and try to detect columns
+
+function checkLogin() {
+  var pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PW) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('instructions').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('refresh-header-btn').style.display = 'block';
+    renderTab('all');
+  } else {
+    document.getElementById('err-msg').style.display = 'block';
+  }
+}
+
+function parseRows(text) {
+  var lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  // Detect header row
+  var header = lines[0].split('\t').map(function(h) { return h.trim().toLowerCase(); });
+  var rows = [];
+  for (var i = 1; i < lines.length; i++) {
+    var cells = lines[i].split('\t');
+    var row = {};
+    for (var j = 0; j < header.length; j++) {
+      row[header[j]] = (cells[j] || '').trim();
+    }
+    // Normalize field names
+    rows.push({
+      mrn:           row['mrn'] || row['1'] || '',
+      location:      row['location'] || row['2'] || '',
+      date:          row['date'] || row['3'] || '',
+      scheduledTime: row['scheduled time'] || row['4'] || '',
+      timeoutTime:   row['time-out'] || row['5'] || '',
+      cause:         row['cause'] || row['6'] || '',
+      comment:       row['comment'] || row['7'] || '',
+      documentation: row['documentation'] || row['8'] || ''
+    });
+  }
+  return rows;
+}
+
+function loadData() {
+  var s = document.getElementById('paste-scheduled').value;
+  var u = document.getElementById('paste-unscheduled').value;
+  var c = document.getElementById('paste-cerclage').value;
+  allData.scheduled   = s.trim() ? parseRows(s) : [];
+  allData.unscheduled = u.trim() ? parseRows(u) : [];
+  allData.cerclage    = c.trim() ? parseRows(c) : [];
+  renderTab(currentTab);
+}
+
+function getRows(tab) {
+  if (tab === 'all') {
+    return allData.scheduled.concat(allData.unscheduled).concat(allData.cerclage);
+  }
+  return allData[tab] || [];
+}
+
+function toMinutes(t) {
+  if (!t) return null;
+  var parts = String(t).replace(/[ap]m/i,'').trim().split(':');
+  if (parts.length < 2) return null;
+  var h = parseInt(parts[0]), m = parseInt(parts[1]);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function delayMins(row) {
+  var s = toMinutes(row.scheduledTime), e = toMinutes(row.timeoutTime);
+  if (s === null || e === null) return null;
+  var d = e - s;
+  if (d < 0) d += 1440;
+  return d > 0 && d < 300 ? d : null;
+}
+
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  var rows = getRows(tab);
+  document.getElementById('stat-total').textContent = rows.length;
+  var delays = rows.map(delayMins).filter(function(d) { return d !== null; });
+  document.getElementById('stat-avg').textContent = delays.length ? Math.round(delays.reduce(function(a,b){return a+b;},0)/delays.length) : '—';
+  document.getElementById('stat-fmc').textContent = rows.filter(function(r){return r.location==='FMC L&D';}).length;
+  document.getElementById('stat-omc').textContent = rows.filter(function(r){return r.location==='OMC L&D';}).length;
+  renderCauseChart(rows);
+  renderLocationChart(rows);
+  renderDOWChart(rows);
+  renderTrendChart(rows);
+  renderTable(rows);
+}
+
+function makeChart(id, type, labels, data, colors) {
+  if (charts[id]) charts[id].destroy();
+  var ctx = document.getElementById(id).getContext('2d');
+  var cfg = {
+    type: type,
+    data: { labels: labels, datasets: [{ data: data, backgroundColor: colors || COLORS, borderWidth: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { color: '#7a8299', font: { family:'DM Sans', size:11 }, boxWidth:10, padding:10 } } }
+    }
+  };
+  if (type === 'bar') {
+    cfg.options.scales = {
+      x: { ticks: { color:'#7a8299', font:{family:'DM Sans',size:11} }, grid: { color:'#2a3045' } },
+      y: { ticks: { color:'#7a8299', font:{family:'DM Sans',size:11} }, grid: { color:'#2a3045' } }
+    };
+    cfg.data.datasets[0].borderRadius = 6;
+  }
+  charts[id] = new Chart(ctx, cfg);
+}
+
+function renderCauseChart(rows) {
+  var keys = ['Anesthesia Bump','Nursing Bump','Unwarranted Delay by Anesthesia','Unwarranted Delay by Nursing','MD Hold','EVS Delay','Mandatory Nursing Break'];
+  var counts = {};
+  keys.forEach(function(k) { counts[k] = 0; });
+  rows.forEach(function(r) {
+    (r.cause||'').split(',').forEach(function(c) {
+      var t = c.trim();
+      if (counts[t] !== undefined) counts[t]++;
+    });
+  });
+  var labels = keys.filter(function(k){return counts[k]>0;});
+  if (!labels.length) { if(charts['chart-cause']) charts['chart-cause'].destroy(); return; }
+  makeChart('chart-cause','doughnut',labels,labels.map(function(k){return counts[k];}));
+}
+
+function renderLocationChart(rows) {
+  var m = {};
+  rows.forEach(function(r) { if(r.location) m[r.location] = (m[r.location]||0)+1; });
+  var labels = Object.keys(m);
+  if (!labels.length) { if(charts['chart-location']) charts['chart-location'].destroy(); return; }
+  makeChart('chart-location','doughnut',labels,labels.map(function(k){return m[k];}));
+}
+
+function renderDOWChart(rows) {
+  var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var counts = [0,0,0,0,0,0,0];
+  rows.forEach(function(r) {
+    if (!r.date) return;
+    var d = new Date(r.date + 'T00:00:00');
+    if (!isNaN(d)) counts[d.getDay()]++;
+  });
+  makeChart('chart-dow','bar',days,counts,COLORS[0]);
+}
+
+function renderTrendChart(rows) {
+  var m = {};
+  rows.forEach(function(r) { if(r.date) m[r.date] = (m[r.date]||0)+1; });
+  var sorted = Object.keys(m).sort();
+  if (!sorted.length) { if(charts['chart-trend']) charts['chart-trend'].destroy(); return; }
+  makeChart('chart-trend','bar',sorted,sorted.map(function(k){return m[k];}),COLORS[1]);
+}
+
+function renderTable(rows) {
+  document.getElementById('table-count').textContent = rows.length + ' records';
+  var tbody = document.getElementById('case-table');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" class="no-data">No data yet. Paste response data above and click Load Data.</td></tr>'; return; }
+  var sorted = rows.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  tbody.innerHTML = sorted.map(function(r) {
+    var delay = delayMins(r);
+    var delayStr = delay !== null ? delay + ' min' : '—';
+    var delayColor = delay > 30 ? 'var(--danger)' : delay > 15 ? 'var(--warn)' : 'var(--success)';
+    var docColor = r.documentation==='yes' ? 'var(--success)' : 'var(--danger)';
+    return '<tr>' +
+      '<td>' + (r.mrn||'—') + '</td>' +
+      '<td>' + (r.date||'—') + '</td>' +
+      '<td><span class="badge badge-loc">' + (r.location||'—') + '</span></td>' +
+      '<td>' + (r.scheduledTime||'—') + '</td>' +
+      '<td>' + (r.timeoutTime||'—') + '</td>' +
+      '<td style="color:' + delayColor + ';font-weight:600;">' + delayStr + '</td>' +
+      '<td style="max-width:200px;white-space:normal;">' + (r.cause||'—') + '</td>' +
+      '<td style="color:' + docColor + ';font-weight:600;">' + (r.documentation||'—').toUpperCase() + '</td>' +
+      '</tr>';
+  }).join('');
+}
+</script>
 </head>
 <body>
 
@@ -68,7 +275,7 @@ tr:hover td { background: var(--surface2); }
       <div style="font-size:12px;color:var(--text-muted);">OR Delay Quality Report</div>
     </div>
   </div>
-  <button class="refresh-btn" onclick="loadData()" id="refresh-btn" style="display:none;">↻ Refresh</button>
+  <button class="refresh-btn" id="refresh-header-btn" style="display:none;" onclick="loadData()">↻ Refresh</button>
 </div>
 
 <!-- Login -->
@@ -77,8 +284,8 @@ tr:hover td { background: var(--surface2); }
     <div style="font-size:32px;margin-bottom:12px;">🔒</div>
     <h2>Admin Access</h2>
     <p>Enter the admin password to view the delay report.</p>
-    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')login()">
-    <button class="login-btn" onclick="login()">View Report</button>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkLogin()">
+    <button class="login-btn" onclick="checkLogin()">View Report</button>
     <div class="error-msg" id="err-msg">Incorrect password.</div>
   </div>
 </div>
@@ -86,18 +293,49 @@ tr:hover td { background: var(--surface2); }
 <!-- Dashboard -->
 <div id="dashboard">
   <div class="container">
+
+    <!-- Instructions -->
+    <div id="instructions">
+      <h3>📋 How to load data</h3>
+      <p>Because the data is stored securely in Microsoft Forms on KP servers, you need to paste it in manually each time you want to view the report. Here's how:</p>
+      <ol>
+        <li>Go to <strong>forms.microsoft.com</strong> and open the <strong>Scheduled Delays</strong> form</li>
+        <li>Click the <strong>Responses</strong> tab → click <strong>Open in Excel</strong></li>
+        <li>Select all the data rows (not the header) → Copy → Paste into the box below</li>
+        <li>Repeat for Unscheduled Delays and Cerclage Delays</li>
+        <li>Click <strong>Load Data</strong></li>
+      </ol>
+    </div>
+
+    <!-- Paste area -->
+    <div class="paste-section">
+      <div class="paste-row">
+        <div class="paste-label">Scheduled Delays</div>
+        <textarea class="paste-box" id="paste-scheduled" placeholder="Paste Excel data here…"></textarea>
+      </div>
+      <div class="paste-row">
+        <div class="paste-label">Unscheduled Delays</div>
+        <textarea class="paste-box" id="paste-unscheduled" placeholder="Paste Excel data here…"></textarea>
+      </div>
+      <div class="paste-row">
+        <div class="paste-label">Cerclage Delays</div>
+        <textarea class="paste-box" id="paste-cerclage" placeholder="Paste Excel data here…"></textarea>
+      </div>
+      <button class="parse-btn" onclick="loadData()">Load Data →</button>
+    </div>
+
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('all')">All Cases</button>
-      <button class="tab" onclick="switchTab('Scheduled Delays')">Scheduled C-Section</button>
-      <button class="tab" onclick="switchTab('Unscheduled Delays')">Unscheduled C-Section</button>
-      <button class="tab" onclick="switchTab('Cerclage Delays')">Cerclage</button>
+      <button class="tab active" onclick="switchTab('all',this)">All Cases</button>
+      <button class="tab" onclick="switchTab('scheduled',this)">Scheduled C-Section</button>
+      <button class="tab" onclick="switchTab('unscheduled',this)">Unscheduled C-Section</button>
+      <button class="tab" onclick="switchTab('cerclage',this)">Cerclage</button>
     </div>
 
     <div class="stats-row">
-      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total Delays</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total Delays</div></div>
       <div class="stat-card"><div class="stat-num" id="stat-avg">—</div><div class="stat-label">Avg Delay (min)</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-fmc">—</div><div class="stat-label">FMC L&D</div></div>
-      <div class="stat-card"><div class="stat-num" id="stat-omc">—</div><div class="stat-label">OMC L&D</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-fmc">0</div><div class="stat-label">FMC L&D</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-omc">0</div><div class="stat-label">OMC L&D</div></div>
     </div>
 
     <div class="charts-grid">
@@ -128,7 +366,7 @@ tr:hover td { background: var(--surface2); }
         <table>
           <thead>
             <tr>
-              <th>Case #</th>
+              <th>MRN</th>
               <th>Date</th>
               <th>Location</th>
               <th>Sched.</th>
@@ -138,186 +376,15 @@ tr:hover td { background: var(--surface2); }
               <th>Doc.</th>
             </tr>
           </thead>
-          <tbody id="case-table"></tbody>
+          <tbody id="case-table">
+            <tr><td colspan="8" class="no-data">Enter password and paste data to view report.</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
+
   </div>
 </div>
 
-<script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVLXvA_XPJIRInwq0SCx2pPOhKFjki1CEBhwUkxYxHqMrbQgK3Z77fuQSSLTx7BSaQ/exec';
-const COLORS = ['#4f8ef7','#7c5cfc','#3ecf8e','#f5a623','#e85d75','#38bdf8','#a58cf8'];
-
-let allData = {};
-let pw = '';
-let currentTab = 'all';
-let charts = {};
-
-function login() {
-  pw = document.getElementById('pw-input').value;
-  loadData();
-}
-
-async function loadData() {
-  try {
-    const r = await fetch(`${SCRIPT_URL}?action=report&password=${encodeURIComponent(pw)}&_=${Date.now()}`);
-    const d = await r.json();
-    if (d.error) { document.getElementById('err-msg').style.display='block'; return; }
-    document.getElementById('err-msg').style.display='none';
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    document.getElementById('refresh-btn').style.display='block';
-    allData = d;
-    renderTab(currentTab);
-  } catch(e) { alert('Error loading data. Please try again.'); }
-}
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  renderTab(tab);
-}
-
-function getRows(tab) {
-  if (tab === 'all') {
-    return [].concat(
-      (allData['Scheduled Delays']   || []).map(r => ({...r, type:'Scheduled'})),
-      (allData['Unscheduled Delays'] || []).map(r => ({...r, type:'Unscheduled'})),
-      (allData['Cerclage Delays']    || []).map(r => ({...r, type:'Cerclage'}))
-    );
-  }
-  return (allData[tab] || []);
-}
-
-function toMinutes(t) {
-  if (!t) return null;
-  const parts = String(t).split(':');
-  if (parts.length < 2) return null;
-  return parseInt(parts[0])*60 + parseInt(parts[1]);
-}
-
-function delayMins(row) {
-  const s = toMinutes(row.scheduledTime), e = toMinutes(row.timeoutTime);
-  if (s === null || e === null) return null;
-  let d = e - s;
-  if (d < 0) d += 1440; // overnight
-  return d > 0 ? d : null;
-}
-
-function renderTab(tab) {
-  const rows = getRows(tab);
-
-  // Stats
-  document.getElementById('stat-total').textContent = rows.length;
-  const delays = rows.map(delayMins).filter(d => d !== null && d < 300);
-  const avg = delays.length ? Math.round(delays.reduce((a,b)=>a+b,0)/delays.length) : '—';
-  document.getElementById('stat-avg').textContent = avg;
-  document.getElementById('stat-fmc').textContent = rows.filter(r=>r.location==='FMC L&D').length;
-  document.getElementById('stat-omc').textContent = rows.filter(r=>r.location==='OMC L&D').length;
-
-  // Charts
-  renderCauseChart(rows);
-  renderLocationChart(rows);
-  renderDOWChart(rows);
-  renderTrendChart(rows);
-
-  // Table
-  renderTable(rows);
-}
-
-function makeChart(id, type, labels, data, colors) {
-  if (charts[id]) charts[id].destroy();
-  const ctx = document.getElementById(id).getContext('2d');
-  const cfg = {
-    type,
-    data: { labels, datasets: [{ data, backgroundColor: colors || COLORS, borderWidth: 0 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { color: '#7a8299', font: { family:'DM Sans', size:11 }, boxWidth:10, padding:10 } } }
-    }
-  };
-  if (type === 'bar') {
-    cfg.options.scales = {
-      x: { ticks: { color:'#7a8299', font:{family:'DM Sans',size:11} }, grid: { color:'#2a3045' } },
-      y: { ticks: { color:'#7a8299', font:{family:'DM Sans',size:11} }, grid: { color:'#2a3045' } }
-    };
-    cfg.data.datasets[0].borderRadius = 6;
-  }
-  charts[id] = new Chart(ctx, cfg);
-}
-
-function countBy(rows, fn) {
-  const m = {};
-  rows.forEach(r => { const k = fn(r); if (!k) return; m[k] = (m[k]||0)+1; });
-  return m;
-}
-
-function renderCauseChart(rows) {
-  const causeKeys = ['Anesthesia Bump','Nursing Bump','Unwarranted Delay by Anesthesia','Unwarranted Delay by Nursing','MD Hold','EVS Delay','Mandatory Nursing Break'];
-  const counts = {};
-  causeKeys.forEach(k => counts[k] = 0);
-  rows.forEach(r => {
-    (r.cause || '').split(',').forEach(c => {
-      const t = c.trim();
-      if (counts[t] !== undefined) counts[t]++;
-    });
-  });
-  const labels = Object.keys(counts).filter(k=>counts[k]>0);
-  const data = labels.map(k=>counts[k]);
-  if (!data.length) { if(charts['chart-cause']) charts['chart-cause'].destroy(); return; }
-  makeChart('chart-cause','doughnut',labels,data);
-}
-
-function renderLocationChart(rows) {
-  const m = countBy(rows, r=>r.location);
-  const labels = Object.keys(m), data = Object.values(m);
-  if (!data.length) { if(charts['chart-location']) charts['chart-location'].destroy(); return; }
-  makeChart('chart-location','doughnut',labels,data);
-}
-
-function renderDOWChart(rows) {
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const counts = [0,0,0,0,0,0,0];
-  rows.forEach(r => {
-    if (!r.date) return;
-    const d = new Date(r.date + 'T00:00:00');
-    if (!isNaN(d)) counts[d.getDay()]++;
-  });
-  makeChart('chart-dow','bar',days,counts,COLORS[0]);
-}
-
-function renderTrendChart(rows) {
-  const m = {};
-  rows.forEach(r => { if (!r.date) return; m[r.date] = (m[r.date]||0)+1; });
-  const sorted = Object.keys(m).sort();
-  if (!sorted.length) { if(charts['chart-trend']) charts['chart-trend'].destroy(); return; }
-  makeChart('chart-trend','bar',sorted,sorted.map(k=>m[k]),COLORS[1]);
-}
-
-function renderTable(rows) {
-  document.getElementById('table-count').textContent = rows.length + ' records';
-  const tbody = document.getElementById('case-table');
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" class="no-data">No data yet.</td></tr>'; return; }
-  const sorted = [...rows].sort((a,b) => (b.date||'').localeCompare(a.date||''));
-  tbody.innerHTML = sorted.map(r => {
-    const delay = delayMins(r);
-    const delayStr = delay !== null ? delay + ' min' : '—';
-    const delayColor = delay > 30 ? 'var(--danger)' : delay > 15 ? 'var(--warn)' : 'var(--success)';
-    const docColor = r.documentation==='yes' ? 'var(--success)' : 'var(--danger)';
-    return `<tr>
-      <td class="case-num">${r.caseNumber||'—'}</td>
-      <td>${r.date||'—'}</td>
-      <td><span class="badge badge-loc">${r.location||'—'}</span></td>
-      <td>${r.scheduledTime||'—'}</td>
-      <td>${r.timeoutTime||'—'}</td>
-      <td style="color:${delayColor};font-weight:600;">${delayStr}</td>
-      <td style="max-width:200px;white-space:normal;">${r.cause||'—'}</td>
-      <td style="color:${docColor};font-weight:600;">${(r.documentation||'—').toUpperCase()}</td>
-    </tr>`;
-  }).join('');
-}
-</script>
 </body>
 </html>
