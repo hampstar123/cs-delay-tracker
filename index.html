@@ -31,8 +31,6 @@
     display: flex;
     flex-direction: column;
   }
-
-  /* NAV */
   .nav {
     display: flex;
     align-items: center;
@@ -47,8 +45,6 @@
     color: var(--accent);
     letter-spacing: 0.05em;
   }
-
-  /* MAIN */
   .main {
     flex: 1;
     max-width: 680px;
@@ -56,7 +52,6 @@
     width: 100%;
     padding: 40px 20px 60px;
   }
-
   .page-label {
     font-family: var(--mono);
     font-size: 10px;
@@ -77,8 +72,6 @@
     color: var(--text-muted);
     margin-bottom: 36px;
   }
-
-  /* Cards — same template as report_index */
   .cards {
     display: flex;
     flex-direction: column;
@@ -110,17 +103,12 @@
     background: var(--surface2);
     transform: translateX(3px);
   }
-
   .card-scheduled::before   { background: var(--accent); }
   .card-unscheduled::before { background: var(--accent2); }
   .card-cerclage::before    { background: var(--success); }
-  .card-reports::before     { background: var(--warn); }
-
   .card-scheduled:hover   { border-color: var(--accent); }
   .card-unscheduled:hover { border-color: var(--accent2); }
   .card-cerclage:hover    { border-color: var(--success); }
-  .card-reports:hover     { border-color: var(--warn); }
-
   .card-body { flex: 1; }
   .card-title {
     font-size: 15px;
@@ -142,14 +130,6 @@
   .card-scheduled:hover   .card-arrow { color: var(--accent); }
   .card-unscheduled:hover .card-arrow { color: var(--accent2); }
   .card-cerclage:hover    .card-arrow { color: var(--success); }
-  .card-reports:hover     .card-arrow { color: var(--warn); }
-
-  .card-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 4px 0;
-  }
-
   @media (max-width: 480px) {
     .card { padding: 18px; }
   }
@@ -188,16 +168,6 @@
       <div class="card-body">
         <div class="card-title">Cerclage</div>
         <div class="card-sub">Cervical cerclage procedure delayed in the OR</div>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <div class="card-divider"></div>
-
-    <a class="card card-reports" href="report_index.html">
-      <div class="card-body">
-        <div class="card-title">View Reports</div>
-        <div class="card-sub">Access delay data and analytics</div>
       </div>
       <div class="card-arrow">→</div>
     </a>
